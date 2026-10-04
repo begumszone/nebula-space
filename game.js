@@ -20,7 +20,7 @@
  *    - 2: İkili Lazer -> Dörtlü Lazer (Quad) -> Foton Ağı -> Takyon Demeti
  *    - 3: Güdümlü Füze -> İkiz Sürü Füzeleri -> Kuantum Torpido -> Kıyamet Sürüsü
  *    - 4: Saçma -> Pentagon -> Nova Saçma -> Süpernova
- *    - 5: Ray Silahı -> Hiper Ray -> Anti-Madde -> Aether Ölüm Işını
+ *    - 5: Ray Silahı -> Hiper Ray -> Anti-Madde -> Nebula Ölüm Işını
  *    - 6: Tesla Ark Topu -> İyon Yıldırımı -> Şimşek Ağı -> Fırtına Zinciri (Hedeflere zincirleme sıçrar)
  *    - 7: Kuantum Vorteks -> Yerçekimi Tekilliği -> Kuantum Çöküşü -> Kara Delik Bombası (Düşmanları içine çeker ve patlar)
  * 
@@ -347,6 +347,42 @@ class AudioEngine {
     } catch (e) {}
   }
 
+  playPortalOpen() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      [220, 330, 440, 660, 880].forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const start = now + idx * 0.08;
+        osc.frequency.setValueAtTime(freq, start);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.4, start + 0.4);
+        gain.gain.setValueAtTime(0.12, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(start); osc.stop(start + 0.45);
+      });
+    } catch (e) {}
+  }
+
+  playWarpJump() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(70, now);
+      osc.frequency.exponentialRampToValueAtTime(850, now + 0.7);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 1.25);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now); osc.stop(now + 1.25);
+    } catch (e) {}
+  }
+
   playPickup(isHealth = false) {
     if (!this.sfxEnabled || !this.ctx) return;
     try {
@@ -482,6 +518,138 @@ class DeployableMine {
   }
 }
 
+// --- 4.5 TAŞIYICI SAVAŞ GEMİSİ / WARP ATLAMA PORTALI (MOTHERSHIP DOCKING) ---
+class MothershipGate {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 120;
+    this.rotation = 0;
+    this.pulse = 0;
+    this.docked = false;
+    this.dockTimer = 0;
+  }
+
+  update(dt, player) {
+    this.rotation += dt * 1.5;
+    this.pulse += dt * 4;
+
+    if (this.docked) {
+      this.dockTimer += dt;
+      return;
+    }
+
+    if (player) {
+      const dist = Math.hypot(player.x - this.x, player.y - this.y);
+      if (dist < 95) {
+        this.docked = true;
+        this.dockTimer = 0;
+      }
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+
+    const pulseScale = 1 + Math.sin(this.pulse) * 0.08;
+
+    // 1. Dış Taşıyıcı Savaş Gemisi Gövdesi & İniş İskelesi
+    ctx.save();
+    ctx.rotate(this.rotation * 0.35);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 3.5;
+    ctx.fillStyle = 'rgba(6, 14, 34, 0.95)';
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = '#00f0ff';
+
+    // 6 Ağır Zırh Kanadı & İniş Hangar Işıkları
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3;
+      ctx.save();
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(68, -20);
+      ctx.lineTo(125, -14);
+      ctx.lineTo(142, 0);
+      ctx.lineTo(125, 14);
+      ctx.lineTo(68, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Yanıp Sönen Yeşil İniş Işıkları
+      const blink = Math.sin(this.pulse * 2.5 + i) > 0;
+      ctx.fillStyle = blink ? '#00ffaa' : '#004d33';
+      ctx.beginPath();
+      ctx.arc(122, 0, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // 2. Dönen İç Enerji Çemberi
+    ctx.save();
+    ctx.rotate(-this.rotation * 1.1);
+    ctx.scale(pulseScale, pulseScale);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 68, 0, Math.PI * 2);
+    ctx.stroke();
+
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 56, Math.sin(a) * 56);
+      ctx.lineTo(Math.cos(a) * 78, Math.sin(a) * 78);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 3. Merkez Hiperuzay Solucan Deliği (Vortex Portal)
+    ctx.save();
+    ctx.rotate(this.rotation * 2.2);
+    const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 56);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.3, '#00f0ff');
+    grad.addColorStop(0.7, '#7928ca');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 56, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Kuantum Çekim Spiralleri
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.2;
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate((Math.PI * 2) / 4);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(28, 22, 50, 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Hangar Başlığı
+    ctx.save();
+    ctx.font = 'bold 12px Orbitron, sans-serif';
+    ctx.fillStyle = '#00f0ff';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = '#00f0ff';
+    ctx.fillText('TAŞIYICI SAVAŞ GEMİSİ / WARP KAPISI', 0, 160);
+    ctx.font = 'bold 10px Rajdhani, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('DÖNÜŞ İÇİN MERKEZE GİRİŞ YAPIN [DOCKING]', 0, 176);
+    ctx.restore();
+
+    ctx.restore();
+  }
+}
+
 // --- 5. İKMAL KAPSÜLLERİ (7 SİLAH + HAK/ONARIM KİTİ) + MANYETİK ÇEKİM ---
 class SupplyPickup {
   constructor(x, y, typeIndex, isPermanent = false, tier = 1) {
@@ -498,7 +666,7 @@ class SupplyPickup {
       ['PLAZMA', 'İKİLİ LAZER', 'GÜDÜMLÜ FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS', 'HAK / ONARIM'],
       ['GATLING', 'DÖRTLÜ LAZER', 'İKİZ FÜZE', 'PENTAGON', 'HİPER RAY', 'İYON YILDIRIM', 'TEKİLLİK BOMBASI', 'HAK / ONARIM'],
       ['VULCAN', 'FOTON LAZER', 'KUANTUM FÜZE', 'NOVA SAÇMA', 'ANTİ-MADDE', 'ŞİMŞEK AĞI', 'KUANTUM ÇÖKÜŞ', 'HAK / ONARIM'],
-      ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'AETHER IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK', 'HAK / ONARIM']
+      ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'NEBULA IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK', 'HAK / ONARIM']
     ];
     const colors = ['#ffe600', '#ff2a2a', '#00d2ff', '#b537f2', '#00ff88', '#00ffff', '#9d00ff', '#00ffaa'];
 
@@ -1437,7 +1605,7 @@ class Player {
         sound.playShoot('SPREAD_CANNON');
         break;
 
-      case 4: // 5: RAY SİLAHI / HİPER RAY / ANTİ-MADDE / AETHER OBLIVION
+      case 4: // 5: RAY SİLAHI / HİPER RAY / ANTİ-MADDE / NEBULA OBLIVION
         bullets.push(new Projectile(this.x, this.y, baseAngle, 'RAILGUN', tier));
         this.ammo[4] = Math.max(0, this.ammo[4] - 1);
         sound.playShoot('RAILGUN');
@@ -1743,6 +1911,19 @@ class Game {
     this.particles = [];
     this.shockwaves = [];
 
+    // Taşıyıcı Savaş Gemisi & Warp Portalı Sistemi
+    this.portal = null;
+    this.warpState = 'NONE'; // 'NONE', 'WARPING'
+    this.warpTimer = 0;
+    this.warpFlash = 0;
+    this.warpStreaks = [];
+    this.nebulaSeeds = [
+      { x: -900, y: -700, r: 750 },
+      { x: 1300, y: 850, r: 800 },
+      { x: -600, y: 1200, r: 650 },
+      { x: 950, y: -950, r: 720 }
+    ];
+
     this.camera = { x: 0, y: 0 };
     this.screenMouseX = window.innerWidth / 2;
     this.screenMouseY = window.innerHeight / 2;
@@ -1814,6 +1995,8 @@ class Game {
       pauseRestartBtn: document.getElementById('pause-restart-btn'),
       levelCompleteOverlay: document.getElementById('level-complete-overlay'),
       lcTitle: document.getElementById('lc-title'),
+      lcSubtitle: document.getElementById('lc-subtitle'),
+      lcNextZone: document.getElementById('lc-next-zone'),
       lcLevelScore: document.getElementById('lc-level-score'),
       lcTotalScore: document.getElementById('lc-total-score'),
       lcKills: document.getElementById('lc-kills'),
@@ -2204,7 +2387,7 @@ class Game {
       ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'],
       ['GATLING', 'DÖRTLÜ LAZER', 'İKİZ FÜZE', 'PENTAGON', 'HİPER RAY', 'İYON YILDIRIM', 'TEKİLLİK'],
       ['VULCAN', 'FOTON LAZER', 'KUANTUM FÜZE', 'NOVA SAÇMA', 'ANTİ-MADDE', 'ŞİMŞEK AĞI', 'KUANTUM ÇÖKÜŞ'],
-      ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'AETHER IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK']
+      ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'NEBULA IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK']
     ][tier - 1] || ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'];
 
     this.dom.weaponSlots.forEach((slot, idx) => {
@@ -2266,6 +2449,12 @@ class Game {
     this.shockwaves = [];
     this.spawnTimer = 0;
 
+    // Sektör Taşıyıcı Gemi & Warp Durumu Sıfırlama
+    this.portal = null;
+    this.warpState = 'NONE';
+    this.warpTimer = 0;
+    this.warpFlash = 0;
+
     if (!this.player) {
       this.player = new Player(0, 0, this.selectedShip);
     } else {
@@ -2276,6 +2465,7 @@ class Game {
     }
 
     const tier = this.getWeaponTier();
+    const theme = this.getSectorTheme(lvl);
 
     // Sektör Başlangıç Sabit İkmal İstasyonları (Kendi kendine doğmaz, haritada bekler)
     // 1. Can / Onarım Kiti (Sol geride)
@@ -2308,7 +2498,7 @@ class Game {
         '',
         'SİLAH TEKNOLOJİSİ EVRİLDİ: TIER 2!',
         'SİLAH TEKNOLOJİSİ EVRİLDİ: TIER 3 (KUANTUM)!',
-        'NİHAİ EVRİM: AETHER PROTOKOLÜ (TIER 4)!'
+        'NİHAİ EVRİM: NEBULA PROTOKOLÜ (TIER 4)!'
       ];
       const tierDescs = [
         '',
@@ -2319,8 +2509,77 @@ class Game {
       ];
       this.showBanner(tierTitles[tier], tierDescs[tier]);
     } else {
-      this.showBanner(`BÖLÜM ${lvl} / ${this.maxLevels}`, `Hedef: ${this.levelGoal} Düşman İmha Et.`);
+      this.showBanner(`SEKTÖR ${lvl} / ${this.maxLevels}`, `Bölge: ${theme.name} • Hedef: ${this.levelGoal} Düşman`);
     }
+  }
+
+  // 5 FARKLI DİNAMİK SEKTÖR ATMOSFERİ VE NEBULA RENK TEMASI
+  getSectorTheme(lvl) {
+    if (lvl <= 7) {
+      return {
+        name: 'Kobalt Derin Uzay Kuşağı',
+        zone: 1,
+        bgGradient: ['#020614', '#040e28', '#010208'],
+        nebulaColor1: 'rgba(0, 150, 255, 0.09)',
+        nebulaColor2: 'rgba(0, 240, 255, 0.07)',
+        starColor: '#a5f3fc',
+        gridColor: 'rgba(0, 240, 255, 0.035)'
+      };
+    } else if (lvl <= 15) {
+      return {
+        name: 'Kızıl Plazma Nebulası',
+        zone: 2,
+        bgGradient: ['#160205', '#2c040d', '#080102'],
+        nebulaColor1: 'rgba(255, 42, 42, 0.10)',
+        nebulaColor2: 'rgba(255, 120, 0, 0.08)',
+        starColor: '#fca5a5',
+        gridColor: 'rgba(255, 60, 60, 0.04)'
+      };
+    } else if (lvl <= 23) {
+      return {
+        name: 'Zehirli Zümrüt Asit Kuşağı',
+        zone: 3,
+        bgGradient: ['#011409', '#032612', '#010804'],
+        nebulaColor1: 'rgba(0, 255, 136, 0.09)',
+        nebulaColor2: 'rgba(180, 255, 0, 0.07)',
+        starColor: '#86efac',
+        gridColor: 'rgba(0, 255, 136, 0.04)'
+      };
+    } else if (lvl <= 32) {
+      return {
+        name: 'Kuantum Mor Yarığı',
+        zone: 4,
+        bgGradient: ['#0e021a', '#1e0536', '#06010c'],
+        nebulaColor1: 'rgba(181, 55, 242, 0.10)',
+        nebulaColor2: 'rgba(230, 70, 255, 0.08)',
+        starColor: '#d8b4fe',
+        gridColor: 'rgba(181, 55, 242, 0.04)'
+      };
+    } else {
+      return {
+        name: 'Kıyamet Tekilliği (Kara Delik)',
+        zone: 5,
+        bgGradient: ['#140800', '#261202', '#040200'],
+        nebulaColor1: 'rgba(255, 170, 0, 0.11)',
+        nebulaColor2: 'rgba(255, 60, 0, 0.09)',
+        starColor: '#fef08a',
+        gridColor: 'rgba(255, 170, 0, 0.045)'
+      };
+    }
+  }
+
+  // HEDEF TAMAMLANDIĞINDA TAŞIYICI GEMİ VE WARP PORTALI BELİRİR
+  openMothershipPortal() {
+    if (this.portal) return;
+
+    const spawnAngle = this.player ? this.player.angle : 0;
+    const spawnDist = 440;
+    const px = this.player ? this.player.x + Math.cos(spawnAngle) * spawnDist : 0;
+    const py = this.player ? this.player.y + Math.sin(spawnAngle) * spawnDist : 0;
+
+    this.portal = new MothershipGate(px, py);
+    this.audio.playPortalOpen();
+    this.showBanner('SEKTÖR TEMİZLENDİ!', 'Taşıyıcı Ana Gemi Geldi! İbreyi Takip Edin ve Portala Giriş Yapın.');
   }
 
   triggerLevelComplete() {
@@ -2329,10 +2588,19 @@ class Game {
     this.isThrusting = false;
     this.audio.playLevelComplete();
 
-    if (this.dom.lcTitle) this.dom.lcTitle.textContent = `BÖLÜM ${this.currentLevel} TAMAMLANDI!`;
+    const nextLvl = this.currentLevel + 1;
+    const nextTheme = this.getSectorTheme(nextLvl);
+
+    if (this.dom.lcTitle) this.dom.lcTitle.textContent = `SEKTÖR ${this.currentLevel} TEMİZLENDİ!`;
+    if (this.dom.lcSubtitle) this.dom.lcSubtitle.textContent = 'Taşıyıcı ana gemiye dönüldü, hiperuzay sıçraması hazır';
     if (this.dom.lcLevelScore) this.dom.lcLevelScore.textContent = `+${this.levelScore}`;
     if (this.dom.lcTotalScore) this.dom.lcTotalScore.textContent = `${this.totalScore}`;
     if (this.dom.lcKills) this.dom.lcKills.textContent = `${this.levelKills} Düşman`;
+    if (this.dom.lcNextZone) {
+      this.dom.lcNextZone.textContent = `Sektör ${nextLvl}: ${nextTheme.name}`;
+      this.dom.lcNextZone.style.color = nextTheme.starColor;
+      this.dom.lcNextZone.style.textShadow = `0 0 10px ${nextTheme.starColor}`;
+    }
 
     if (this.dom.levelCompleteOverlay) this.dom.levelCompleteOverlay.classList.remove('hidden');
   }
@@ -2354,7 +2622,7 @@ class Game {
   }
 
   spawnEnemy() {
-    if (!this.player) return;
+    if (!this.player || this.portal) return;
     const spawnDist = Math.max(this.viewWidth, this.viewHeight) * 0.75 + 120;
     const a = Math.random() * Math.PI * 2;
     const ex = this.player.x + Math.cos(a) * spawnDist;
@@ -2470,9 +2738,8 @@ class Game {
           this.dropEnemyLoot(e);
           this.enemies.splice(i, 1);
 
-          if (this.levelKills >= this.levelGoal) {
-            this.triggerLevelComplete();
-            return;
+          if (this.levelKills >= this.levelGoal && !this.portal) {
+            this.openMothershipPortal();
           }
         }
       }
@@ -2483,6 +2750,30 @@ class Game {
     if (this.isPaused || this.isLevelPaused) return;
 
     this.elapsedTime += dt;
+
+    // Hiperuzay Sıçrama Durumu (Mothership içine girildiğinde)
+    if (this.warpState === 'WARPING') {
+      this.warpTimer += dt;
+      if (this.player && this.portal) {
+        // Gemiyi Taşıyıcı Geminin hangar merkezine çek ve döndür
+        this.player.x += (this.portal.x - this.player.x) * 0.14;
+        this.player.y += (this.portal.y - this.player.y) * 0.14;
+        this.player.angle += dt * 8;
+        this.player.vx = 0;
+        this.player.vy = 0;
+      }
+
+      this.camera.x = this.player.x - this.viewWidth / 2;
+      this.camera.y = this.player.y - this.viewHeight / 2;
+
+      // 1.4 saniye sonra level complete ekranını aç
+      if (this.warpTimer > 1.4) {
+        this.warpState = 'NONE';
+        this.triggerLevelComplete();
+        return;
+      }
+      return;
+    }
 
     this.camera.x = this.player.x - this.viewWidth / 2;
     this.camera.y = this.player.y - this.viewHeight / 2;
@@ -2498,6 +2789,34 @@ class Game {
     }
 
     this.player.update(dt, targetAimAngle, this.isThrusting, this.particles);
+
+    // Taşıyıcı Savaş Gemisi & Warp Portalı Kontrolü
+    if (this.portal) {
+      this.portal.update(dt, this.player);
+
+      if (this.portal.docked && this.warpState === 'NONE') {
+        this.warpState = 'WARPING';
+        this.warpTimer = 0;
+        this.warpFlash = 1.0;
+        this.audio.playWarpJump();
+        this.showBanner('DOCKING BAŞARILI!', 'Hiperuzay Atlama Motorları Devrede...');
+
+        // Hiperuzay warp çizgilerini hazırla
+        this.warpStreaks = [];
+        for (let s = 0; s < 120; s++) {
+          const a = Math.random() * Math.PI * 2;
+          const dist = Math.random() * 450 + 50;
+          this.warpStreaks.push({
+            x: Math.cos(a) * dist,
+            y: Math.sin(a) * dist,
+            len: Math.random() * 70 + 30,
+            speed: Math.random() * 800 + 500,
+            angle: a,
+            color: Math.random() < 0.5 ? '#00f0ff' : '#ffffff'
+          });
+        }
+      }
+    }
 
     if (this.isFiring) {
       this.player.tryShoot(dt, this.bullets, this.particles, this.audio, false, this.getWeaponTier());
@@ -2578,9 +2897,8 @@ class Game {
               this.totalScore += 120;
               this.dropEnemyLoot(e);
               this.enemies.splice(j, 1);
-              if (this.levelKills >= this.levelGoal) {
-                this.triggerLevelComplete();
-                return;
+              if (this.levelKills >= this.levelGoal && !this.portal) {
+                this.openMothershipPortal();
               }
             }
           }
@@ -2666,9 +2984,8 @@ class Game {
             this.dropEnemyLoot(e);
             this.enemies.splice(j, 1);
 
-            if (this.levelKills >= this.levelGoal) {
-              this.triggerLevelComplete();
-              return;
+            if (this.levelKills >= this.levelGoal && !this.portal) {
+              this.openMothershipPortal();
             }
           }
 
@@ -2871,6 +3188,31 @@ class Game {
       }
     }
 
+    // Taşıyıcı Savaş Gemisi Portalı (Radar üzerinde parlayan altın/mavi hedef)
+    if (this.portal) {
+      const rx = (this.portal.x - this.player.x) * scale + w / 2;
+      const ry = (this.portal.y - this.player.y) * scale + h / 2;
+      const clampedRx = Math.max(8, Math.min(w - 8, rx));
+      const clampedRy = Math.max(8, Math.min(h - 8, ry));
+
+      ctx.save();
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00f0ff';
+      ctx.beginPath();
+      ctx.arc(clampedRx, clampedRy, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Nabız Halkası
+      const pR = 5 + ((Date.now() % 1000) / 1000) * 8;
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(clampedRx, clampedRy, pR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // Oyuncu (Seçilen gemi renginde parlar)
     ctx.fillStyle = this.player.color || '#00f0ff';
     ctx.beginPath();
@@ -2884,11 +3226,152 @@ class Game {
     ctx.stroke();
   }
 
+  // PARALLAKS NEBULA BULUTLARI (5 DİNAMİK BÖLGE TEMASINA GÖRE)
+  drawNebulaClouds(theme) {
+    this.ctx.save();
+    const px = -this.camera.x * 0.16;
+    const py = -this.camera.y * 0.16;
+    this.ctx.translate(px, py);
+
+    for (let i = 0; i < this.nebulaSeeds.length; i++) {
+      const seed = this.nebulaSeeds[i];
+      const gx = seed.x + this.viewWidth / 2;
+      const gy = seed.y + this.viewHeight / 2;
+      const grad = this.ctx.createRadialGradient(gx, gy, 40, gx, gy, seed.r);
+      const col = (i % 2 === 0) ? theme.nebulaColor1 : theme.nebulaColor2;
+      grad.addColorStop(0, col);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.ctx.fillStyle = grad;
+      this.ctx.beginPath();
+      this.ctx.arc(gx, gy, seed.r, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+    this.ctx.restore();
+  }
+
+  // TAŞIYICI SAVAŞ GEMİSİ HEDEF GÖSTERGE OKU VE MESAFE SAYACI
+  drawPortalBeacon(ctx) {
+    if (!this.portal || !this.player || this.portal.docked) return;
+
+    const dx = this.portal.x - this.player.x;
+    const dy = this.portal.y - this.player.y;
+    const dist = Math.hypot(dx, dy);
+
+    const centerX = this.viewWidth / 2;
+    const centerY = this.viewHeight / 2;
+    const angle = Math.atan2(dy, dx);
+
+    const screenX = this.portal.x - this.camera.x;
+    const screenY = this.portal.y - this.camera.y;
+
+    const margin = 80;
+    const isOffScreen = screenX < margin || screenX > this.viewWidth - margin ||
+                        screenY < margin || screenY > this.viewHeight - margin;
+
+    ctx.save();
+    if (isOffScreen) {
+      // Ekran kenarına ibre/ok sabitleme
+      const clampX = Math.max(margin, Math.min(this.viewWidth - margin, centerX + Math.cos(angle) * (this.viewWidth / 2 - margin)));
+      const clampY = Math.max(margin, Math.min(this.viewHeight - margin, centerY + Math.sin(angle) * (this.viewHeight / 2 - margin)));
+
+      ctx.translate(clampX, clampY);
+      ctx.rotate(angle);
+
+      // Neon üçgen ibre
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = '#00f0ff';
+      ctx.fillStyle = '#00f0ff';
+      ctx.beginPath();
+      ctx.moveTo(24, 0);
+      ctx.lineTo(-14, -13);
+      ctx.lineTo(-6, 0);
+      ctx.lineTo(-14, 13);
+      ctx.closePath();
+      ctx.fill();
+
+      // Mesafe Bilgisi
+      ctx.rotate(-angle);
+      ctx.font = 'bold 12px Orbitron, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00f0ff';
+      ctx.fillText(`${Math.round(dist)}m`, 0, -22);
+      ctx.font = 'bold 9px Rajdhani, sans-serif';
+      ctx.fillStyle = '#00ffaa';
+      ctx.fillText('PORTAL', 0, 26);
+    } else {
+      // Ekranda görünürken portal üstünde iniş kılavuzu
+      ctx.font = 'bold 12px Orbitron, sans-serif';
+      ctx.fillStyle = '#00ffaa';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#00ffaa';
+      ctx.fillText(`▼ DOCKING HEDEFİ (${Math.round(dist)}m)`, screenX, screenY - 140);
+    }
+    ctx.restore();
+  }
+
+  // HİPERUZAY WARP GEÇİŞ EFEKTİ (STAR STREAKS & FLASH)
+  drawWarpEffect(ctx) {
+    if (this.warpState !== 'WARPING') return;
+
+    ctx.save();
+    const cx = this.viewWidth / 2;
+    const cy = this.viewHeight / 2;
+
+    // Hiperuzay Hız Çizgileri
+    ctx.lineWidth = 2.5;
+    for (const st of this.warpStreaks) {
+      st.speed += 40;
+      const curDist = Math.hypot(st.x, st.y);
+      const nx = st.x + Math.cos(st.angle) * st.speed * 0.016;
+      const ny = st.y + Math.sin(st.angle) * st.speed * 0.016;
+      st.x = nx;
+      st.y = ny;
+
+      const tailX = cx + nx - Math.cos(st.angle) * (st.len + curDist * 0.35);
+      const tailY = cy + ny - Math.sin(st.angle) * (st.len + curDist * 0.35);
+      const headX = cx + nx;
+      const headY = cy + ny;
+
+      ctx.strokeStyle = st.color;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = st.color;
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(headX, headY);
+      ctx.stroke();
+    }
+
+    // Beyaz / Mavi Flaş Efekti
+    if (this.warpFlash > 0) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.92, this.warpFlash)})`;
+      ctx.fillRect(0, 0, this.viewWidth, this.viewHeight);
+      this.warpFlash -= 0.025;
+    }
+    ctx.restore();
+  }
+
   draw() {
-    this.ctx.fillStyle = '#020308';
+    const theme = this.getSectorTheme(this.currentLevel);
+
+    // 1. Dinamik Kozmik Arka Plan Gradyanı
+    const bgGrad = this.ctx.createRadialGradient(
+      this.viewWidth / 2, this.viewHeight / 2, 60,
+      this.viewWidth / 2, this.viewHeight / 2, Math.max(this.viewWidth, this.viewHeight) * 0.85
+    );
+    bgGrad.addColorStop(0, theme.bgGradient[1]);
+    bgGrad.addColorStop(0.6, theme.bgGradient[0]);
+    bgGrad.addColorStop(1, theme.bgGradient[2]);
+    this.ctx.fillStyle = bgGrad;
     this.ctx.fillRect(0, 0, this.viewWidth, this.viewHeight);
 
-    const drawInfiniteStars = (speed, count, size, alpha) => {
+    // 2. Parallaks Nebula Gaz Bulutları
+    this.drawNebulaClouds(theme);
+
+    // 3. Yıldız Alanları (Temanın yıldız renginde)
+    const drawInfiniteStars = (speed, count, size, alpha, color) => {
       this.ctx.save();
       const tileSize = 600;
       const offsetX = -(this.camera.x * speed) % tileSize;
@@ -2897,7 +3380,8 @@ class Game {
       const cols = Math.ceil(this.viewWidth / tileSize) + 2;
       const rows = Math.ceil(this.viewHeight / tileSize) + 2;
 
-      this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      this.ctx.fillStyle = color;
+      this.ctx.globalAlpha = alpha;
       for (let c = -1; c < cols; c++) {
         for (let r = -1; r < rows; r++) {
           const tileX = c * tileSize + offsetX;
@@ -2915,20 +3399,21 @@ class Game {
       this.ctx.restore();
     };
 
-    drawInfiniteStars(0.12, 14, 1.0, 0.35);
-    drawInfiniteStars(0.35, 10, 1.8, 0.65);
-    drawInfiniteStars(0.85, 6, 2.5, 0.95);
+    drawInfiniteStars(0.12, 14, 1.0, 0.45, theme.starColor);
+    drawInfiniteStars(0.35, 10, 1.8, 0.70, '#ffffff');
+    drawInfiniteStars(0.85, 6, 2.5, 0.95, theme.starColor);
 
     this.ctx.save();
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
+    // 4. Dinamik Renkli Koordinat Izgarası
     const gridStep = 200;
     const startX = Math.floor(this.camera.x / gridStep) * gridStep;
     const endX = startX + this.viewWidth + gridStep * 2;
     const startY = Math.floor(this.camera.y / gridStep) * gridStep;
     const endY = startY + this.viewHeight + gridStep * 2;
 
-    this.ctx.strokeStyle = 'rgba(0, 240, 255, 0.03)';
+    this.ctx.strokeStyle = theme.gridColor;
     this.ctx.lineWidth = 1;
     for (let x = startX; x <= endX; x += gridStep) {
       this.ctx.beginPath();
@@ -2941,6 +3426,11 @@ class Game {
       this.ctx.moveTo(startX, y);
       this.ctx.lineTo(endX, y);
       this.ctx.stroke();
+    }
+
+    // Taşıyıcı Savaş Gemisi / Warp Portalı
+    if (this.portal) {
+      this.portal.draw(this.ctx);
     }
 
     // Şok Dalgaları
@@ -2965,6 +3455,12 @@ class Game {
     if (this.player) this.player.draw(this.ctx, this.isThrusting);
 
     this.ctx.restore();
+
+    // 5. Ekran Sabit UI: Taşıyıcı Gemi Gösterge Oku & Mesafe İbresi
+    this.drawPortalBeacon(this.ctx);
+
+    // 6. Hiperuzay Sıçrama Çizgileri ve Parlama Efekti
+    this.drawWarpEffect(this.ctx);
 
     // Mobil Sanal Joystick (Sol Başparmak)
     if (this.joystick && this.joystick.active) {

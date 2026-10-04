@@ -174,15 +174,15 @@
           </div>
           <div class="instruction-item">
             <span class="icon">⚡</span>
-            <span><strong>Silah Evrimi (4 Tier):</strong> Bölümler ilerledikçe cephaneliğin evrilir ve güçlenir (Dörtlü Lazer, İkiz Güdümlü Füze, Vulcan ve Aether Işını)!</span>
+            <span><strong>Silah Evrimi (4 Tier):</strong> Bölümler ilerledikçe cephaneliğin evrilir ve güçlenir (Dörtlü Lazer, İkiz Güdümlü Füze, Vulcan ve Nebula Işını)!</span>
           </div>
           <div class="instruction-item">
             <span class="icon">⏸️</span>
             <span><strong>Duraklatma:</strong> İstediğin zaman <strong>ESC</strong> tuşuyla oyunu durdurabilirsin.</span>
           </div>
           <div class="instruction-item">
-            <span class="icon">🎯</span>
-            <span><strong>40 Bölümlük Harekât:</strong> Her bölüm hedefi bittiğinde oyun durur ve kazandığın skoru gösterir.</span>
+            <span class="icon">🚀</span>
+            <span><strong>Taşıyıcı Ana Gemi & Warp Geçişi:</strong> Sektör hedefi tamamlandığında Taşıyıcı Savaş Gemisi portali açılır. İbreyi ve radarı takip edip gemiye giriş yaparak (Docking) sonraki sektöre hiperuzay sıçraması yap!</span>
           </div>
           <div class="instruction-item">
             <span class="icon">📱</span>
@@ -268,16 +268,16 @@
       </div>
     </div>
 
-    <!-- BÖLÜM TAMAMLANDI (LEVEL COMPLETE) MODALI -->
+    <!-- BÖLÜM TAMAMLANDI (MOTHERSHIP DOCKING COMPLETE) MODALI -->
     <div id="level-complete-overlay" class="overlay hidden">
       <div class="overlay-card level-card">
-        <div class="tech-tag success">SEKTÖR GÖREVİ BAŞARILI</div>
-        <h1 id="lc-title" class="neon-title lc-title">BÖLÜM 1 TAMAMLANDI</h1>
-        <p class="subtitle">Bölge temizlendi, sonraki sektöre rota çiziliyor</p>
+        <div class="tech-tag success">SEKTÖR TEMİZLENDİ • SAVAŞ GEMİSİNE DÖNÜŞ BAŞARILI</div>
+        <h1 id="lc-title" class="neon-title lc-title">SEKTÖR 1 TAMAMLANDI</h1>
+        <p id="lc-subtitle" class="subtitle">Taşıyıcı ana gemiye yanaşıldı, hiperuzay sıçraması hazır</p>
 
         <div class="results">
           <div class="result-row highlight">
-            <span>Bu Bölümde Kazanılan Puan:</span>
+            <span>Sektörde Kazanılan Puan:</span>
             <strong id="lc-level-score">+0</strong>
           </div>
           <div class="result-row">
@@ -288,13 +288,17 @@
             <span>İmha Edilen Tehdit:</span>
             <strong id="lc-kills">0</strong>
           </div>
+          <div class="result-row">
+            <span>Sonraki Sektör Atmosferi:</span>
+            <strong id="lc-next-zone" style="color: #00f0ff; text-shadow: 0 0 10px #00f0ff;">Kobalt Derin Uzay Kuşağı</strong>
+          </div>
           <div class="result-row bonus-row">
-            <span>İkmal Ödülü:</span>
-            <span class="bonus-tag">+35 Can, Kalkan Şarjı, +4 Mayın</span>
+            <span>Gövde & Mühimmat İkmali:</span>
+            <span class="bonus-tag">+40 Can, Tam Kalkan, +4 Mayın</span>
           </div>
         </div>
 
-        <button id="next-level-btn" class="neon-btn">SONRAKİ BÖLÜME GEÇ (SPACE)</button>
+        <button id="next-level-btn" class="neon-btn">SONRAKİ SEKTÖRE ATLA (SPACE)</button>
       </div>
     </div>
 
