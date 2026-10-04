@@ -25,16 +25,15 @@
  *    - 7: Kuantum Vorteks -> Yerçekimi Tekilliği -> Kuantum Çöküşü -> Kara Delik Bombası (Düşmanları içine çeker ve patlar)
  * 
  * 4. Stratejik İkmal & Düşman Ganimeti Sistemi:
- *    - Kapsüller bölüm başlangıcında haritaya sabit olarak konuşlandırılır.
- *    - Savaş esnasında YALNIZCA düşmanlar yok edildiğinde ganimet olarak düşer.
- *    - Manyetik Çekim (Tractor Beam): 280m yakınına gelindiğinde mıknatıs gibi gemiye çekilir.
- *    - "HAK / ONARIM KİTİ": Canı +40 onarır, kalkanı %100 doldurur, +2 mayın verir.
+ *    - Kapsüller seviye başlangıcında haritada sabit olarak konuşlandırılır.
+ *    - Savaş esnasında düşmanlar yok edildiğinde ganimet olarak düşer.
+ *    - "HAK / CAN KİTİ": Can (+1 Hak), kalkanı %100 doldurur, +3 mayın verir.
  * 
  * 5. 2 Tip Alan Etkili Mayın:
  *    - 0: Termonükleer Mayın (280px alan, 750 hasar, tüm filoyu silen devasa alev dalgası)
  *    - 1: EMP Şok Mayını (350px alan, 480 hasar, elektrik fırtınası + düşmanları %55 yavaşlatma)
  * 
- * 6. 5 Farklı Düşman Türü & 40 Kademeli Bölüm & ESC Duraklatma
+ * 6. 5 Farklı Düşman Türü & 40 Kademeli Seviye & ESC Duraklatma
  */
 
 // --- 1. ŞOK DALGASI (PATLAYAN MAYIN / FÜZE / VORTEKS ALAN EFEKTİ) ---
@@ -528,11 +527,17 @@ class MothershipGate {
     this.pulse = 0;
     this.docked = false;
     this.dockTimer = 0;
+    this.warmup = 1.2; // 1.2 saniye materyalizasyon koruması (Kazara anında girişi önler)
   }
 
   update(dt, player) {
     this.rotation += dt * 1.5;
     this.pulse += dt * 4;
+
+    if (this.warmup > 0) {
+      this.warmup -= dt;
+      return;
+    }
 
     if (this.docked) {
       this.dockTimer += dt;
@@ -675,32 +680,11 @@ class SupplyPickup {
   }
 
   update(player, dt, particles) {
-    this.pulse += dt * 4;
+    this.pulse += dt * 3.5;
     if (!this.isPermanent) {
       this.life -= dt;
     }
-
-    if (player) {
-      const dist = Math.hypot(player.x - this.x, player.y - this.y);
-      if (dist < 280) {
-        const pullSpeed = (1 - dist / 280) * 750 + 280;
-        const pullAngle = Math.atan2(player.y - this.y, player.x - this.x);
-        this.x += Math.cos(pullAngle) * pullSpeed * dt;
-        this.y += Math.sin(pullAngle) * pullSpeed * dt;
-
-        if (Math.random() < 0.28 && particles) {
-          particles.push(new Particle(
-            this.x,
-            this.y,
-            this.color,
-            Math.random() * 2.5 + 1.5,
-            Math.random() * 50 + 20,
-            pullAngle + Math.PI,
-            0.22
-          ));
-        }
-      }
-    }
+    // İkmal ve Hak kapsülleri uzayda sabit ve kararlı durur (Oyuncuyu kovalamaz veya yer değiştirmez)
   }
 
   draw(ctx) {
@@ -1494,6 +1478,19 @@ class Player {
     if (idx >= 0 && idx < 7) this.weaponIndex = idx;
   }
 
+  // EN İYİ VE EN GÜÇLÜ SİLAHI BULMA HİYERARŞİSİ (Vorteks -> Tesla -> Ray -> Saçma -> Füze -> Lazer -> Plazma)
+  getBestAvailableWeapon() {
+    for (let i = 6; i >= 1; i--) {
+      if (this.ammo[i] > 0) return i;
+    }
+    return 0; // Hiçbiri yoksa Standart Sonsuz Plazma
+  }
+
+  switchToBestWeapon() {
+    this.weaponIndex = this.getBestAvailableWeapon();
+    return this.weaponIndex;
+  }
+
   toggleMine() {
     this.mineIndex = this.mineIndex === 0 ? 1 : 0;
     return this.mineIndex;
@@ -1536,8 +1533,9 @@ class Player {
       if (this.fireTimer < delay) return;
     }
 
-    if (this.ammo[this.weaponIndex] <= 0) {
-      this.weaponIndex = 0;
+    // Seçili silahın cephanesi yoksa hemen en iyi silaha geç
+    if (this.weaponIndex !== 0 && this.ammo[this.weaponIndex] <= 0) {
+      this.switchToBestWeapon();
     }
 
     this.fireTimer = 0;
@@ -1622,6 +1620,11 @@ class Player {
         this.ammo[6] = Math.max(0, this.ammo[6] - 1);
         sound.playShoot('VORTEX_BOMB');
         break;
+    }
+
+    // KURAL: Eğer mevcut silahın cephanesi bu atışla bittiyse otomatik olarak alt kademedeki en iyi silaha geç!
+    if (this.weaponIndex !== 0 && this.ammo[this.weaponIndex] <= 0) {
+      this.switchToBestWeapon();
     }
 
     particles.push(new Particle(
@@ -1954,6 +1957,16 @@ class Game {
     this.totalKills = 0;
     this.elapsedTime = 0;
 
+    // Hak / Can ve Yeniden Doğuş Sistemi (3 Can ile Başlar)
+    this.lives = 3;
+    this.maxLives = 5;
+
+    // 20 Saniyelik Swarm Tarzı Bonus İkmal Seviyesi
+    this.isBonusLevel = false;
+    this.bonusTimer = 0;
+    this.bonusPickupsCollected = 0;
+    this.justFinishedBonus = false;
+
     this.spawnTimer = 0;
 
     this.isRunning = false;
@@ -1964,6 +1977,7 @@ class Game {
 
     this.dom = {
       levelDisplay: document.getElementById('level-display'),
+      livesDisplay: document.getElementById('lives-display'),
       scoreDisplay: document.getElementById('score-display'),
       timeDisplay: document.getElementById('time-display'),
       objectiveText: document.getElementById('objective-text'),
@@ -2051,9 +2065,10 @@ class Game {
   togglePause() {
     if (!this.isRunning || this.isLevelPaused) return;
 
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     this.isPaused = !this.isPaused;
     if (this.isPaused) {
-      if (this.dom.pauseLevel) this.dom.pauseLevel.textContent = `Bölüm ${this.currentLevel} / ${this.maxLevels}`;
+      if (this.dom.pauseLevel) this.dom.pauseLevel.textContent = `Seviye ${this.currentLevel} / ${this.maxLevels}`;
       if (this.dom.pauseScore) this.dom.pauseScore.textContent = this.totalScore;
       if (this.dom.pauseMines && this.player) this.dom.pauseMines.textContent = `x${this.player.mineAmmo}`;
       if (this.dom.pauseOverlay) this.dom.pauseOverlay.classList.remove('hidden');
@@ -2092,7 +2107,11 @@ class Game {
       if (e.button === 0) { // Sol Tık Seri Ateş
         this.isFiring = true;
         if (this.player) {
+          const prevWep = this.player.weaponIndex;
           this.player.tryShoot(0.2, this.bullets, this.particles, this.audio, true, this.getWeaponTier());
+          if (prevWep !== this.player.weaponIndex) {
+            this.updateWeaponSlots();
+          }
         }
       } else if (e.button === 2) { // Sağ Tık Alan Mayını Bırak
         e.preventDefault();
@@ -2109,6 +2128,11 @@ class Game {
 
     // KLAVYE KONTROLLERİ (1-7 SİLAHLAR)
     window.addEventListener('keydown', (e) => {
+      // Space tuşunun sayfayı kaydırmasını veya odaklı butonları (Space = click) tetiklemesini engelle
+      if (e.code === 'Space') {
+        e.preventDefault();
+      }
+
       if (!this.isRunning) {
         if (this.dom.startOverlay && !this.dom.startOverlay.classList.contains('hidden') && (e.code === 'Space' || e.code === 'Enter')) {
           this.audio.init();
@@ -2122,7 +2146,8 @@ class Game {
         }
       }
 
-      if (this.isLevelPaused && (e.code === 'Space' || e.code === 'Enter')) {
+      // Seviye geçişinde YALNIZCA Enter tuşu çalışır; Space tuşu KESİNLİKLE seviye atlatmaz (uçuş itki motorudur)
+      if (this.isLevelPaused && e.code === 'Enter') {
         this.nextLevel();
         return;
       }
@@ -2190,7 +2215,13 @@ class Game {
         e.preventDefault();
         this.audio.init();
         this.isFiring = true;
-        if (this.player) this.player.tryShoot(0.2, this.bullets, this.particles, this.audio, true, this.getWeaponTier());
+        if (this.player) {
+          const prevWep = this.player.weaponIndex;
+          this.player.tryShoot(0.2, this.bullets, this.particles, this.audio, true, this.getWeaponTier());
+          if (prevWep !== this.player.weaponIndex) {
+            this.updateWeaponSlots();
+          }
+        }
       });
       this.dom.mobileFireBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.isFiring = false; });
       this.dom.mobileFireBtn.addEventListener('touchcancel', () => { this.isFiring = false; });
@@ -2326,6 +2357,7 @@ class Game {
 
     if (this.dom.startBtn) {
       this.dom.startBtn.addEventListener('click', () => {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         this.audio.init();
         this.start();
       });
@@ -2333,6 +2365,7 @@ class Game {
 
     if (this.dom.restartBtn) {
       this.dom.restartBtn.addEventListener('click', () => {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         this.audio.init();
         this.start();
       });
@@ -2340,18 +2373,21 @@ class Game {
 
     if (this.dom.pauseBtn) {
       this.dom.pauseBtn.addEventListener('click', () => {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         this.togglePause();
       });
     }
 
     if (this.dom.resumeBtn) {
       this.dom.resumeBtn.addEventListener('click', () => {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         this.togglePause();
       });
     }
 
     if (this.dom.pauseRestartBtn) {
       this.dom.pauseRestartBtn.addEventListener('click', () => {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         this.isPaused = false;
         if (this.dom.pauseOverlay) this.dom.pauseOverlay.classList.add('hidden');
         this.start();
@@ -2359,7 +2395,9 @@ class Game {
     }
 
     if (this.dom.nextLevelBtn) {
-      this.dom.nextLevelBtn.addEventListener('click', () => {
+      this.dom.nextLevelBtn.addEventListener('click', (e) => {
+        if (e && e.currentTarget && e.currentTarget.blur) e.currentTarget.blur();
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         this.nextLevel();
       });
     }
@@ -2414,15 +2452,21 @@ class Game {
   }
 
   start() {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     if (this.dom.startOverlay) this.dom.startOverlay.classList.add('hidden');
     if (this.dom.gameOverOverlay) this.dom.gameOverOverlay.classList.add('hidden');
     if (this.dom.levelCompleteOverlay) this.dom.levelCompleteOverlay.classList.add('hidden');
     if (this.dom.pauseOverlay) this.dom.pauseOverlay.classList.add('hidden');
 
     this.currentLevel = 1;
+    this.lives = 3;
     this.totalScore = 0;
     this.totalKills = 0;
     this.elapsedTime = 0;
+    this.isBonusLevel = false;
+    this.justFinishedBonus = false;
+    this.bonusTimer = 0;
+    this.bonusPickupsCollected = 0;
 
     this.setupLevel(1);
     this.isRunning = true;
@@ -2438,7 +2482,7 @@ class Game {
 
   setupLevel(lvl) {
     this.currentLevel = lvl;
-    this.levelGoal = 10 + lvl * 3;
+    this.levelGoal = 18 + lvl * 4;
     this.levelKills = 0;
     this.levelScore = 0;
 
@@ -2448,8 +2492,9 @@ class Game {
     this.pickups = [];
     this.shockwaves = [];
     this.spawnTimer = 0;
+    this.isBonusLevel = false;
 
-    // Sektör Taşıyıcı Gemi & Warp Durumu Sıfırlama
+    // Seviye Taşıyıcı Gemi & Warp Durumu Sıfırlama
     this.portal = null;
     this.warpState = 'NONE';
     this.warpTimer = 0;
@@ -2467,7 +2512,7 @@ class Game {
     const tier = this.getWeaponTier();
     const theme = this.getSectorTheme(lvl);
 
-    // Sektör Başlangıç Sabit İkmal İstasyonları (Kendi kendine doğmaz, haritada bekler)
+    // Seviye Başlangıç Sabit İkmal İstasyonları
     // 1. Can / Onarım Kiti (Sol geride)
     this.pickups.push(new SupplyPickup(this.player.x - 360, this.player.y - 180, 7, true, tier));
     
@@ -2486,6 +2531,11 @@ class Game {
     }
     if (lvl >= 10) {
       this.pickups.push(new SupplyPickup(this.player.x - 740, this.player.y - 620, 6, true, tier)); // Kuantum Vorteks
+    }
+
+    // Seviye başında haritayı canlı tutmak için hemen ilk düşman filosunu konuşlandır
+    for (let s = 0; s < 6; s++) {
+      this.spawnEnemy();
     }
 
     this.updateWeaponSlots();
@@ -2509,12 +2559,98 @@ class Game {
       ];
       this.showBanner(tierTitles[tier], tierDescs[tier]);
     } else {
-      this.showBanner(`SEKTÖR ${lvl} / ${this.maxLevels}`, `Bölge: ${theme.name} • Hedef: ${this.levelGoal} Düşman`);
+      this.showBanner(`SEVİYE ${lvl} / ${this.maxLevels}`, `Bölge: ${theme.name} • Hedef: ${this.levelGoal} Düşman`);
     }
   }
 
-  // 5 FARKLI DİNAMİK SEKTÖR ATMOSFERİ VE NEBULA RENK TEMASI
+  // 20 SANİYELİK SWARM TARZI BONUS İKMAL SEVİYESİ
+  setupBonusLevel() {
+    this.isBonusLevel = true;
+    this.bonusTimer = 20.0;
+    this.bonusPickupsCollected = 0;
+    this.enemies = [];
+    this.bullets = [];
+    this.mines = [];
+    this.pickups = [];
+    this.shockwaves = [];
+    this.portal = null;
+    this.warpState = 'NONE';
+
+    if (this.player) {
+      this.player.x = 0;
+      this.player.y = 0;
+      this.player.vx = 0;
+      this.player.vy = 0;
+      this.player.hp = this.player.maxHp;
+      this.player.shield = this.player.maxShield;
+      this.player.invulnerableTimer = 2.0;
+    }
+
+    const tier = this.getWeaponTier();
+
+    // 60+ İkmal Kapsülü ve Can Kiti (Dairesel Alanlar Halinde Saçılmış)
+    const rings = [
+      { radius: 240, count: 8 },
+      { radius: 460, count: 14 },
+      { radius: 700, count: 20 },
+      { radius: 980, count: 24 }
+    ];
+
+    rings.forEach((ring) => {
+      for (let i = 0; i < ring.count; i++) {
+        const angle = (i * Math.PI * 2) / ring.count + (Math.random() - 0.5) * 0.2;
+        const dist = ring.radius + (Math.random() - 0.5) * 60;
+        const px = Math.cos(angle) * dist;
+        const py = Math.sin(angle) * dist;
+        const typeIndex = Math.random() < 0.25 ? 7 : (Math.floor(Math.random() * 6) + 1);
+        this.pickups.push(new SupplyPickup(px, py, typeIndex, false, tier));
+      }
+    });
+
+    this.showBanner('🌟 BONUS SEVİYESİ: İKMAL VE CAN DEPOSU (20 SANİYE)! 🌟', 'Düşman Yok! 20 Saniye İçinde Toplayabildiğin Kadar Silah ve Can Topla!');
+    this.updateWeaponSlots();
+    this.updateHUD();
+    this.lastTime = performance.now();
+  }
+
+  endBonusLevel() {
+    this.isBonusLevel = false;
+    this.isLevelPaused = true;
+    this.isFiring = false;
+    this.isThrusting = false;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    this.audio.playLevelComplete();
+
+    const nextLvl = this.currentLevel + 1;
+    const nextTheme = this.getSectorTheme(nextLvl);
+
+    if (this.dom.lcTitle) this.dom.lcTitle.textContent = 'BONUS SEVİYESİ TAMAMLANDI!';
+    if (this.dom.lcSubtitle) this.dom.lcSubtitle.textContent = `${this.bonusPickupsCollected} Adet İkmal Kapsülü ve Cephane Güvenle Depolandı.`;
+    if (this.dom.lcLevelScore) this.dom.lcLevelScore.textContent = `+${this.bonusPickupsCollected * 250}`;
+    if (this.dom.lcTotalScore) this.dom.lcTotalScore.textContent = `${this.totalScore}`;
+    if (this.dom.lcKills) this.dom.lcKills.textContent = `${this.bonusPickupsCollected} Kapsül Toplandı`;
+    if (this.dom.lcNextZone) {
+      this.dom.lcNextZone.textContent = `Seviye ${nextLvl}: ${nextTheme.name}`;
+      this.dom.lcNextZone.style.color = nextTheme.starColor;
+      this.dom.lcNextZone.style.textShadow = `0 0 10px ${nextTheme.starColor}`;
+    }
+
+    if (this.dom.levelCompleteOverlay) this.dom.levelCompleteOverlay.classList.remove('hidden');
+  }
+
+  // 5 FARKLI DİNAMİK SEVİYE ATMOSFERİ VE NEBULA RENK TEMASI
   getSectorTheme(lvl) {
+    if (this.isBonusLevel) {
+      return {
+        name: 'Altın İkmal ve Can Deposu',
+        zone: 0,
+        bgGradient: ['#1c1402', '#362402', '#0a0701'],
+        nebulaColor1: 'rgba(255, 215, 0, 0.14)',
+        nebulaColor2: 'rgba(255, 170, 0, 0.10)',
+        starColor: '#fef08a',
+        gridColor: 'rgba(255, 215, 0, 0.05)'
+      };
+    }
     if (lvl <= 7) {
       return {
         name: 'Kobalt Derin Uzay Kuşağı',
@@ -2572,34 +2708,42 @@ class Game {
   openMothershipPortal() {
     if (this.portal) return;
 
-    const spawnAngle = this.player ? this.player.angle : 0;
-    const spawnDist = 440;
+    // Geminin burnunun hemen dibine DEĞİL, 1250 metre uzağa doğar (Navigasyon gerektirir)
+    const spawnAngle = Math.random() * Math.PI * 2;
+    const spawnDist = 1250;
     const px = this.player ? this.player.x + Math.cos(spawnAngle) * spawnDist : 0;
     const py = this.player ? this.player.y + Math.sin(spawnAngle) * spawnDist : 0;
 
     this.portal = new MothershipGate(px, py);
     this.audio.playPortalOpen();
-    this.showBanner('SEKTÖR TEMİZLENDİ!', 'Taşıyıcı Ana Gemi Geldi! İbreyi Takip Edin ve Portala Giriş Yapın.');
+    this.showBanner('SEVİYE TEMİZLENDİ!', 'Taşıyıcı Ana Gemi Geldi! İbreyi Takip Edin ve Portala Giriş Yapın.');
   }
 
   triggerLevelComplete() {
     this.isLevelPaused = true;
     this.isFiring = false;
     this.isThrusting = false;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     this.audio.playLevelComplete();
 
     const nextLvl = this.currentLevel + 1;
     const nextTheme = this.getSectorTheme(nextLvl);
 
-    if (this.dom.lcTitle) this.dom.lcTitle.textContent = `SEKTÖR ${this.currentLevel} TEMİZLENDİ!`;
+    if (this.dom.lcTitle) this.dom.lcTitle.textContent = `SEVİYE ${this.currentLevel} TEMİZLENDİ!`;
     if (this.dom.lcSubtitle) this.dom.lcSubtitle.textContent = 'Taşıyıcı ana gemiye dönüldü, hiperuzay sıçraması hazır';
     if (this.dom.lcLevelScore) this.dom.lcLevelScore.textContent = `+${this.levelScore}`;
     if (this.dom.lcTotalScore) this.dom.lcTotalScore.textContent = `${this.totalScore}`;
     if (this.dom.lcKills) this.dom.lcKills.textContent = `${this.levelKills} Düşman`;
     if (this.dom.lcNextZone) {
-      this.dom.lcNextZone.textContent = `Sektör ${nextLvl}: ${nextTheme.name}`;
-      this.dom.lcNextZone.style.color = nextTheme.starColor;
-      this.dom.lcNextZone.style.textShadow = `0 0 10px ${nextTheme.starColor}`;
+      if (this.currentLevel % 4 === 0) {
+        this.dom.lcNextZone.textContent = `🌟 SIRADAKİ: 20 SANİYELİK BONUS SEVİYESİ!`;
+        this.dom.lcNextZone.style.color = '#ffd700';
+        this.dom.lcNextZone.style.textShadow = '0 0 12px #ffd700';
+      } else {
+        this.dom.lcNextZone.textContent = `Seviye ${nextLvl}: ${nextTheme.name}`;
+        this.dom.lcNextZone.style.color = nextTheme.starColor;
+        this.dom.lcNextZone.style.textShadow = `0 0 10px ${nextTheme.starColor}`;
+      }
     }
 
     if (this.dom.levelCompleteOverlay) this.dom.levelCompleteOverlay.classList.remove('hidden');
@@ -2607,40 +2751,96 @@ class Game {
 
   nextLevel() {
     if (this.dom.levelCompleteOverlay) this.dom.levelCompleteOverlay.classList.add('hidden');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     this.isLevelPaused = false;
     this.isFiring = false;
     this.isThrusting = false;
 
     if (this.currentLevel >= this.maxLevels) {
-      this.showBanner('KAMPANYA TAMAMLANDI!', 'Tüm 40 Sektör Başarıyla Kurtarıldı!');
+      this.showBanner('KAMPANYA TAMAMLANDI!', 'Tüm 40 Seviye Başarıyla Kurtarıldı!');
       this.gameOver(true);
       return;
     }
 
+    // Her 4 seviyede bir (4, 8, 12, 16, 20, 24, 28, 32, 36) Swarm tarzı BONUS SEVİYESİ açılır!
+    if (this.currentLevel % 4 === 0 && !this.justFinishedBonus) {
+      this.justFinishedBonus = true;
+      this.setupBonusLevel();
+      return;
+    }
+
+    this.justFinishedBonus = false;
     this.setupLevel(this.currentLevel + 1);
     this.lastTime = performance.now();
   }
 
-  spawnEnemy() {
-    if (!this.player || this.portal) return;
-    const spawnDist = Math.max(this.viewWidth, this.viewHeight) * 0.75 + 120;
-    const a = Math.random() * Math.PI * 2;
-    const ex = this.player.x + Math.cos(a) * spawnDist;
-    const ey = this.player.y + Math.sin(a) * spawnDist;
+  // OYUNCU CANI TÜKENDİĞİNDE: BULUNDUĞU SEVİYEDEN DEVAM ETME SİSTEMİ
+  handlePlayerDeath() {
+    this.createExplosion(this.player.x, this.player.y, '#00f0ff', 40);
+    this.createExplosion(this.player.x, this.player.y, '#ff0055', 40);
+    this.audio.playExplosion(true);
 
-    const r = Math.random();
+    this.lives--;
+    this.updateHUD();
+
+    if (this.lives > 0) {
+      // 8. Seviyede yandıysa 8. Seviyede kalır!
+      this.shockwaves.push(new Shockwave(this.player.x, this.player.y, 450, '#00f0ff'));
+      this.audio.playEMP();
+
+      for (const en of this.enemies) {
+        const d = Math.hypot(en.x - this.player.x, en.y - this.player.y);
+        if (d < 450) {
+          const pushAng = Math.atan2(en.y - this.player.y, en.x - this.player.x);
+          en.x += Math.cos(pushAng) * 260;
+          en.y += Math.sin(pushAng) * 260;
+        }
+      }
+
+      this.player.hp = this.player.maxHp;
+      this.player.shield = this.player.maxShield;
+      this.player.vx = 0;
+      this.player.vy = 0;
+      this.player.invulnerableTimer = 3.5;
+
+      this.showBanner(
+        `GEMİ İMHA OLDU! [${this.lives} CAN KALDI]`,
+        `Seviye ${this.currentLevel}'de Devam Ediliyor • 3.5sn Dokunulmazlık Kalkanı Aktif!`
+      );
+    } else {
+      // Tüm canlar bittiğinde oyun biter
+      this.gameOver(false);
+    }
+  }
+
+  spawnEnemy() {
+    if (!this.player || this.portal || this.isBonusLevel) return;
+
+    const spawnDist = Math.max(this.viewWidth, this.viewHeight) * 0.75 + 140;
+    const baseAngle = Math.random() * Math.PI * 2;
     const lvl = this.currentLevel;
 
-    if (lvl >= 15 && r < 0.22) {
-      this.enemies.push(new CosmicLeviathan(ex, ey));
-    } else if (lvl >= 6 && r < 0.42) {
-      this.enemies.push(new HeavyDreadnought(ex, ey));
-    } else if (lvl >= 3 && r < 0.62) {
-      this.enemies.push(new SniperSloop(ex, ey));
-    } else if (r < 0.82) {
-      this.enemies.push(new ShadowInterceptor(ex, ey));
-    } else {
-      this.enemies.push(new PlasmaMine(ex, ey));
+    // Swarm Mekaniği: Düşmanlar tek tek değil, 2-3'lü filo/sürü halinde saldırır
+    const swarmCount = (lvl >= 4 && Math.random() < 0.45) ? 3 : (Math.random() < 0.55 ? 2 : 1);
+
+    for (let s = 0; s < swarmCount; s++) {
+      const offsetAngle = baseAngle + (s - (swarmCount - 1) / 2) * 0.16;
+      const ex = this.player.x + Math.cos(offsetAngle) * (spawnDist + s * 30);
+      const ey = this.player.y + Math.sin(offsetAngle) * (spawnDist + s * 30);
+
+      const r = Math.random();
+      if (lvl >= 15 && r < 0.20) {
+        this.enemies.push(new CosmicLeviathan(ex, ey));
+        break; // Leviathan devasa solucandır, tek başına gelir
+      } else if (lvl >= 6 && r < 0.40) {
+        this.enemies.push(new HeavyDreadnought(ex, ey));
+      } else if (lvl >= 3 && r < 0.60) {
+        this.enemies.push(new SniperSloop(ex, ey));
+      } else if (r < 0.82) {
+        this.enemies.push(new ShadowInterceptor(ex, ey));
+      } else {
+        this.enemies.push(new PlasmaMine(ex, ey));
+      }
     }
   }
 
@@ -2751,6 +2951,16 @@ class Game {
 
     this.elapsedTime += dt;
 
+    // 20 Saniyelik Swarm Tarzı Bonus İkmal Seviyesi Süre Kontrolü
+    if (this.isBonusLevel) {
+      this.bonusTimer -= dt;
+      if (this.bonusTimer <= 0) {
+        this.bonusTimer = 0;
+        this.endBonusLevel();
+        return;
+      }
+    }
+
     // Hiperuzay Sıçrama Durumu (Mothership içine girildiğinde)
     if (this.warpState === 'WARPING') {
       this.warpTimer += dt;
@@ -2819,15 +3029,21 @@ class Game {
     }
 
     if (this.isFiring) {
+      const prevWep = this.player.weaponIndex;
       this.player.tryShoot(dt, this.bullets, this.particles, this.audio, false, this.getWeaponTier());
+      if (prevWep !== this.player.weaponIndex) {
+        this.updateWeaponSlots();
+      }
     }
 
-    // Düşman Doğurma
-    this.spawnTimer += dt;
-    const spawnRate = Math.max(0.42, 1.6 - (this.currentLevel * 0.03));
-    if (this.spawnTimer >= spawnRate) {
-      this.spawnTimer = 0;
-      this.spawnEnemy();
+    // Düşman Doğurma (Bonus seviyesinde düşman doğmaz)
+    if (!this.isBonusLevel) {
+      this.spawnTimer += dt;
+      const spawnRate = Math.max(0.42, 1.6 - (this.currentLevel * 0.03));
+      if (this.spawnTimer >= spawnRate) {
+        this.spawnTimer = 0;
+        this.spawnEnemy();
+      }
     }
 
     // Mayın Kontrolleri
@@ -3023,13 +3239,13 @@ class Game {
         }
 
         if (died) {
-          this.gameOver();
+          this.handlePlayerDeath();
           return;
         }
       }
     }
 
-    // İkmal Kapsüllerinin Toplanması & Manyetik Çekim
+    // İkmal Kapsüllerinin Toplanması
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const pk = this.pickups[i];
       pk.update(this.player, dt, this.particles);
@@ -3040,24 +3256,45 @@ class Game {
       }
 
       const dist = Math.hypot(pk.x - this.player.x, pk.y - this.player.y);
-      if (dist < pk.radius + this.player.radius + 25) {
+      if (dist < pk.radius + this.player.radius + 20) {
         if (pk.typeIndex === 7) {
           // HAK / CAN ONARIM KİTİ
-          this.player.hp = Math.min(this.player.maxHp, this.player.hp + 40);
+          this.player.hp = Math.min(this.player.maxHp, this.player.hp + 50);
           this.player.shield = this.player.maxShield;
-          this.player.mineAmmo = Math.min(15, this.player.mineAmmo + 2);
+          this.player.mineAmmo = Math.min(15, this.player.mineAmmo + 3);
+          
+          if (this.lives < this.maxLives) {
+            this.lives++;
+            this.showBanner('EKSTRA CAN KAZANILDI! ❤️', `Gövde & Kalkan Onarıldı • Kalan Can: ${this.lives}`);
+          } else {
+            this.showBanner('GEMİ TAMİR EDİLDİ!', '+50 Gövde, Tam Kalkan, +3 Mayın');
+          }
           this.audio.playPickup(true);
           this.createExplosion(pk.x, pk.y, '#00ffaa', 24);
-          this.showBanner('GEMİ ONARILDI!', '+40 Gövde, Kalkan Şarjı, +2 Mayın');
         } else {
           // 7 SİLAHTAN BİRİ
           const ammoBoosts = [0, 90, 20, 60, 12, 45, 8];
           this.player.ammo[pk.typeIndex] += ammoBoosts[pk.typeIndex] || 25;
-          this.player.setWeaponIndex(pk.typeIndex);
+
+          // KURAL: Her zaman en iyi silah elde kalır.
+          // Mevcut silah bitmişse veya toplanan silah mevcut silahtan daha güçlüyse o silaha geçilir;
+          // aksi takdirde güçlü silah bozulmaz, cephane envantere yüklenir!
+          if (this.player.ammo[this.player.weaponIndex] <= 0 || pk.typeIndex > this.player.weaponIndex) {
+            this.player.setWeaponIndex(pk.typeIndex);
+            this.showBanner(`${pk.name} KUŞANILDI!`, 'Daha güçlü silah devrede.');
+          } else {
+            this.showBanner(`+${ammoBoosts[pk.typeIndex]} ${pk.name} CEPHANESİ!`, `Mevcut Silah Korundu (${this.player.ammo[this.player.weaponIndex]} mermi)`);
+          }
+
           this.updateWeaponSlots();
           this.audio.playPickup(false);
           this.createExplosion(pk.x, pk.y, pk.color, 20);
-          this.showBanner(`${pk.name} KUŞANILDI!`, 'Cephane ve sistemler hazır.');
+        }
+
+        if (this.isBonusLevel) {
+          this.bonusPickupsCollected++;
+          this.levelScore += 250;
+          this.totalScore += 250;
         }
 
         this.pickups.splice(i, 1);
@@ -3094,7 +3331,19 @@ class Game {
   updateHUD() {
     if (!this.player) return;
 
-    if (this.dom.levelDisplay) this.dom.levelDisplay.textContent = `${this.currentLevel} / ${this.maxLevels}`;
+    if (this.dom.levelDisplay) {
+      if (this.isBonusLevel) {
+        this.dom.levelDisplay.textContent = `BONUS (${Math.ceil(this.bonusTimer)}s)`;
+      } else {
+        this.dom.levelDisplay.textContent = `${this.currentLevel} / ${this.maxLevels}`;
+      }
+    }
+
+    if (this.dom.livesDisplay) {
+      const hearts = '❤️'.repeat(Math.max(0, this.lives));
+      this.dom.livesDisplay.textContent = `${hearts} (${this.lives})`;
+    }
+
     if (this.dom.scoreDisplay) this.dom.scoreDisplay.textContent = this.totalScore;
 
     const mins = Math.floor(this.elapsedTime / 60);
@@ -3104,9 +3353,15 @@ class Game {
     }
 
     if (this.dom.objectiveText) {
-      this.dom.objectiveText.textContent = `${this.levelKills} / ${this.levelGoal} DÜŞMAN`;
+      if (this.isBonusLevel) {
+        this.dom.objectiveText.textContent = `İKMAL TOPLA: ${this.bonusPickupsCollected} KAPSÜL (${Math.ceil(this.bonusTimer)}s)`;
+      } else {
+        this.dom.objectiveText.textContent = `${this.levelKills} / ${this.levelGoal} DÜŞMAN`;
+      }
     }
-    const objPct = Math.min(100, (this.levelKills / this.levelGoal) * 100);
+    const objPct = this.isBonusLevel
+      ? Math.max(0, (this.bonusTimer / 20.0) * 100)
+      : Math.min(100, (this.levelKills / this.levelGoal) * 100);
     if (this.dom.objectiveFill) this.dom.objectiveFill.style.width = `${objPct}%`;
 
     const shieldPct = Math.max(0, (this.player.shield / this.player.maxShield) * 100);
@@ -3128,7 +3383,7 @@ class Game {
     }
   }
 
-  // --- SEKTÖR RADARI ---
+  // --- SEVİYE RADARI ---
   drawRadar() {
     if (!this.radarCtx || !this.radarCanvas || !this.player) return;
     const ctx = this.radarCtx;
@@ -3539,6 +3794,7 @@ class Game {
 
   gameOver(victory = false) {
     this.isRunning = false;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     if (this.player) {
       this.createExplosion(this.player.x, this.player.y, '#00f0ff', 45);
       this.createExplosion(this.player.x, this.player.y, '#ff0055', 45);
@@ -3546,7 +3802,7 @@ class Game {
     this.audio.playExplosion(true);
 
     if (this.dom.finalScore) this.dom.finalScore.textContent = this.totalScore;
-    if (this.dom.finalWave) this.dom.finalWave.textContent = `Bölüm ${this.currentLevel} / ${this.maxLevels}`;
+    if (this.dom.finalWave) this.dom.finalWave.textContent = `Seviye ${this.currentLevel} / ${this.maxLevels}`;
     if (this.dom.finalTime && this.dom.timeDisplay) this.dom.finalTime.textContent = this.dom.timeDisplay.textContent;
     if (this.dom.finalKills) this.dom.finalKills.textContent = this.totalKills;
 

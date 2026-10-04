@@ -101,6 +101,21 @@ html, body {
   color: var(--neon-green) !important;
 }
 
+.lives-badge {
+  border-color: rgba(255, 0, 85, 0.45) !important;
+  background: rgba(255, 0, 85, 0.08) !important;
+}
+
+.lives-badge .label {
+  color: #ff3377 !important;
+}
+
+.lives-badge span:last-child {
+  color: #ff3377 !important;
+  font-size: 13px !important;
+  text-shadow: 0 0 10px rgba(255, 0, 85, 0.7) !important;
+}
+
 .stat-badge .label {
   font-size: 9px;
   letter-spacing: 1.5px;

@@ -19,8 +19,12 @@
       <div class="hud-top">
         <div class="stats-group">
           <div class="stat-badge level-badge">
-            <span class="label">BÖLÜM</span>
+            <span class="label">SEVİYE</span>
             <span id="level-display">1 / 40</span>
+          </div>
+          <div class="stat-badge lives-badge" title="Kalan Can / Hak Sayısı">
+            <span class="label">CAN / HAK</span>
+            <span id="lives-display">❤️❤️❤️ (3)</span>
           </div>
           <div class="stat-badge">
             <span class="label">TOPLAM SKOR</span>
@@ -32,11 +36,11 @@
           </div>
         </div>
 
-        <!-- Bölüm Görev İlerlemesi (Level Progress) -->
+        <!-- Seviye Görev İlerlemesi (Level Progress) -->
         <div class="objective-card">
           <div class="objective-header">
-            <span class="label">BÖLÜM HEDEFİ</span>
-            <span id="objective-text">0 / 12 DÜŞMAN</span>
+            <span class="label">SEVİYE HEDEFİ</span>
+            <span id="objective-text">0 / 18 DÜŞMAN</span>
           </div>
           <div class="objective-bar-wrap">
             <div id="objective-fill" class="objective-fill" style="width: 0%;"></div>
@@ -56,10 +60,10 @@
         </div>
       </div>
 
-      <!-- Sektör Radarı (Yerel Tarayıcı) -->
+      <!-- Seviye Radarı (Yerel Tarayıcı) -->
       <div id="radar-container">
         <canvas id="radarCanvas" width="130" height="130"></canvas>
-        <span class="radar-label">SEKTÖR RADARI (3000m)</span>
+        <span class="radar-label">SEVİYE RADARI (3000m)</span>
       </div>
 
       <!-- 7'li Silah Envanter Barı (Hotkeys 1-7 & Fare Tekerleği) -->
@@ -151,7 +155,7 @@
     <!-- Başlangıç / Bilgi Overlay -->
     <div id="start-overlay" class="overlay">
       <div class="overlay-card">
-        <div class="tech-tag">40 BÖLÜMLÜK UZAY HAREKÂTI</div>
+        <div class="tech-tag">40 SEVİYELİK UZAY HAREKÂTI</div>
         <h1 class="neon-title">NEBULA SPACE</h1>
         <p class="subtitle">Taktiksel Uzay Savaşı & İt Dalaşı Simülatörü</p>
         
@@ -169,12 +173,12 @@
             <span><strong>2 Çeşit Alan Mayını (Sağ Tık):</strong> <strong>Sağ tık</strong> ile bırak! <strong>Q / E</strong> ile <strong>Termonükleer Mayın</strong> veya <strong>EMP Şok Mayını</strong> seç. Düşman yaklaştığında devasa bir alandaki tüm filoyu yok eder!</span>
           </div>
           <div class="instruction-item">
-            <span class="icon">🧲</span>
-            <span><strong>İkmal & Hak Kitleri:</strong> Kapsüller bölüm başında haritaya yerleştirilmiştir ve düşmanları yok ettikçe ganimet olarak düşer. 280m yaklaştığında mıknatıs gibi gemine çekilir! Yeşil <strong>HAK / ONARIM KİTİ</strong> can, kalkan ve mayın tazeler.</span>
+            <span class="icon">❤️</span>
+            <span><strong>İkmal & Hak Kitleri:</strong> Kapsüller seviye başında haritada sabit bekler ve düşmanlar yok edildikçe ganimet olarak düşer. Yeşil <strong>HAK / CAN KİTİ</strong> ekstra can (+1 Hak), kalkan ve mayın tazeler.</span>
           </div>
           <div class="instruction-item">
             <span class="icon">⚡</span>
-            <span><strong>Silah Evrimi (4 Tier):</strong> Bölümler ilerledikçe cephaneliğin evrilir ve güçlenir (Dörtlü Lazer, İkiz Güdümlü Füze, Vulcan ve Nebula Işını)!</span>
+            <span><strong>Silah Evrimi (4 Tier):</strong> Seviyeler ilerledikçe cephaneliğin evrilir ve güçlenir (Dörtlü Lazer, İkiz Güdümlü Füze, Vulcan ve Nebula Işını)! En iyi silah mermisi bitene kadar korunur, bitince otomatik alt kademeye geçer.</span>
           </div>
           <div class="instruction-item">
             <span class="icon">⏸️</span>
@@ -182,7 +186,7 @@
           </div>
           <div class="instruction-item">
             <span class="icon">🚀</span>
-            <span><strong>Taşıyıcı Ana Gemi & Warp Geçişi:</strong> Sektör hedefi tamamlandığında Taşıyıcı Savaş Gemisi portali açılır. İbreyi ve radarı takip edip gemiye giriş yaparak (Docking) sonraki sektöre hiperuzay sıçraması yap!</span>
+            <span><strong>Taşıyıcı Ana Gemi & Warp Geçişi:</strong> Seviye hedefi tamamlandığında Taşıyıcı Savaş Gemisi portali açılır. İbreyi ve radarı takip edip gemiye giriş yaparak (Docking) sonraki seviyeye hiperuzay sıçraması yap!</span>
           </div>
           <div class="instruction-item">
             <span class="icon">📱</span>
@@ -235,7 +239,7 @@
           </div>
         </div>
 
-        <button id="start-btn" class="neon-btn">SEKTÖR 1'E BAŞLA</button>
+        <button id="start-btn" class="neon-btn">SEVİYE 1'E BAŞLA</button>
       </div>
     </div>
 
@@ -248,8 +252,8 @@
         
         <div class="results">
           <div class="result-row">
-            <span>Mevcut Bölüm:</span>
-            <strong id="pause-level">Bölüm 1 / 40</strong>
+            <span>Mevcut Seviye:</span>
+            <strong id="pause-level">Seviye 1 / 40</strong>
           </div>
           <div class="result-row">
             <span>Toplam Skor:</span>
@@ -263,21 +267,21 @@
 
         <div style="display:flex; flex-direction:column; gap:10px;">
           <button id="resume-btn" class="neon-btn">DEVAM ET (ESC)</button>
-          <button id="pause-restart-btn" class="neon-btn secondary">BÖLÜMÜ YENİDEN BAŞLAT</button>
+          <button id="pause-restart-btn" class="neon-btn secondary">SEVİYEYİ YENİDEN BAŞLAT</button>
         </div>
       </div>
     </div>
 
-    <!-- BÖLÜM TAMAMLANDI (MOTHERSHIP DOCKING COMPLETE) MODALI -->
+    <!-- SEVİYE TAMAMLANDI (MOTHERSHIP DOCKING COMPLETE) MODALI -->
     <div id="level-complete-overlay" class="overlay hidden">
       <div class="overlay-card level-card">
-        <div class="tech-tag success">SEKTÖR TEMİZLENDİ • SAVAŞ GEMİSİNE DÖNÜŞ BAŞARILI</div>
-        <h1 id="lc-title" class="neon-title lc-title">SEKTÖR 1 TAMAMLANDI</h1>
+        <div class="tech-tag success">SEVİYE TEMİZLENDİ • SAVAŞ GEMİSİNE DÖNÜŞ BAŞARILI</div>
+        <h1 id="lc-title" class="neon-title lc-title">SEVİYE 1 TAMAMLANDI</h1>
         <p id="lc-subtitle" class="subtitle">Taşıyıcı ana gemiye yanaşıldı, hiperuzay sıçraması hazır</p>
 
         <div class="results">
           <div class="result-row highlight">
-            <span>Sektörde Kazanılan Puan:</span>
+            <span>Seviyede Kazanılan Puan:</span>
             <strong id="lc-level-score">+0</strong>
           </div>
           <div class="result-row">
@@ -289,7 +293,7 @@
             <strong id="lc-kills">0</strong>
           </div>
           <div class="result-row">
-            <span>Sonraki Sektör Atmosferi:</span>
+            <span>Sonraki Seviye Atmosferi:</span>
             <strong id="lc-next-zone" style="color: #00f0ff; text-shadow: 0 0 10px #00f0ff;">Kobalt Derin Uzay Kuşağı</strong>
           </div>
           <div class="result-row bonus-row">
@@ -298,7 +302,7 @@
           </div>
         </div>
 
-        <button id="next-level-btn" class="neon-btn">SONRAKİ SEKTÖRE ATLA (SPACE)</button>
+        <button id="next-level-btn" class="neon-btn" tabindex="-1">SONRAKİ SEVİYEYE ATLA (ENTER)</button>
       </div>
     </div>
 
@@ -310,8 +314,8 @@
         <p class="subtitle">Derin uzayın karanlığında kayboldun...</p>
         <div class="results">
           <div class="result-row">
-            <span>Ulaşılan Bölüm:</span>
-            <strong id="final-wave">Bölüm 1 / 40</strong>
+            <span>Ulaşılan Seviye:</span>
+            <strong id="final-wave">Seviye 1 / 40</strong>
           </div>
           <div class="result-row">
             <span>Toplam Skor:</span>
@@ -326,14 +330,14 @@
             <strong id="final-kills">0</strong>
           </div>
         </div>
-        <button id="restart-btn" class="neon-btn">BÖLÜMÜ TEKRAR DENE</button>
+        <button id="restart-btn" class="neon-btn">SEVİYEYİ TEKRAR DENE</button>
       </div>
     </div>
 
-    <!-- Sektör Bildirimi -->
+    <!-- Seviye Bildirimi -->
     <div id="banner-notification" class="banner-notification hidden">
       <h2 id="banner-title">YENİ TEHDİT!</h2>
-      <p id="banner-desc">Sektör taraması tamamlandı...</p>
+      <p id="banner-desc">Seviye taraması tamamlandı...</p>
     </div>
   </div>
 
