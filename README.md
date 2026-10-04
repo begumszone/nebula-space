@@ -1,6 +1,6 @@
-# 🚀 AETHER PROTOCOL
+# 🚀 NEBULA SPACE
 
-**Aether Protocol**, 1998 yapımı kült klasik *Swarm* oyunundan esinlenen, saf HTML5 Canvas ve Web Audio API ile geliştirilmiş, 40 bölümlük taktiksel bir retro-arcade uzay it dalaşı oyunudur.
+**NEBULA SPACE**, 1998 yapımı kült klasik *Swarm* oyunundan esinlenen, saf HTML5 Canvas ve Web Audio API ile geliştirilmiş, 40 bölümlük taktiksel bir retro-arcade uzay it dalaşı oyunudur.
 
 Harici hiçbir kütüphane veya oyun motoru bağımlılığı yoktur (Zero-dependency Vanilla JS).
 
