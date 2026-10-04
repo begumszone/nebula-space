@@ -1,0 +1,868 @@
+:root {
+  --neon-blue: #00f0ff;
+  --neon-cyan: #00d2ff;
+  --neon-pink: #ff007f;
+  --neon-green: #00ff88;
+  --neon-purple: #b537f2;
+  --neon-yellow: #ffe600;
+  --neon-orange: #ff8800;
+  --neon-red: #ff2a2a;
+  --bg-dark: #020308;
+  --panel-bg: rgba(6, 10, 22, 0.88);
+  --panel-border: rgba(0, 240, 255, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: 'Rajdhani', sans-serif;
+  color: #ffffff;
+  touch-action: none;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #020308;
+}
+
+#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+/* HUD Arayüzü */
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 20px;
+  z-index: 10;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.stats-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stats-group.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-badge {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
+  padding: 5px 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.12);
+}
+
+.level-badge {
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+}
+.level-badge span:last-child {
+  color: var(--neon-green) !important;
+}
+
+.stat-badge .label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #8fa0be;
+  font-weight: 700;
+}
+
+.stat-badge span:last-child {
+  font-family: 'Orbitron', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--neon-blue);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+/* Bölüm Görev Kartı (Objective Progress) */
+.objective-card {
+  background: var(--panel-bg);
+  border: 1px solid rgba(255, 230, 0, 0.4);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  box-shadow: 0 4px 15px rgba(255, 230, 0, 0.15);
+}
+
+.objective-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.objective-header .label {
+  color: var(--neon-yellow);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.objective-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.objective-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow));
+  box-shadow: 0 0 8px var(--neon-yellow);
+  transition: width 0.15s ease-out;
+}
+
+/* Radar (Minimap) */
+#radar-container {
+  position: absolute;
+  top: 75px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(3, 6, 16, 0.9);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(10px);
+  padding: 5px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.18);
+}
+
+#radarCanvas {
+  border-radius: 6px;
+  background: #010206;
+}
+
+.radar-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin-top: 3px;
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* 5'li Silah Envanter Barı & 2 Mayın Paneli */
+#weapon-inventory-bar {
+  pointer-events: auto;
+  position: absolute;
+  top: 75px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(4, 7, 18, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  backdrop-filter: blur(10px);
+  padding: 8px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.weapon-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 145px;
+}
+
+.weapon-slot:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.weapon-slot .slot-key {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+.weapon-slot .slot-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  flex: 1;
+  color: #94a3b8;
+}
+
+.weapon-slot .slot-ammo {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* Aktif Silah Slotları */
+.weapon-slot.active {
+  border-color: var(--neon-yellow);
+  background: rgba(255, 230, 0, 0.12);
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.35);
+}
+.weapon-slot.active .slot-key { background: var(--neon-yellow); color: #020308; }
+.weapon-slot.active .slot-name { color: #ffffff; font-weight: 800; }
+.weapon-slot.active .slot-ammo { color: var(--neon-yellow); text-shadow: 0 0 8px rgba(255, 230, 0, 0.8); }
+
+.weapon-slot[data-index="1"].active { border-color: var(--neon-red); background: rgba(255, 42, 42, 0.15); box-shadow: 0 0 12px rgba(255, 42, 42, 0.4); }
+.weapon-slot[data-index="1"].active .slot-key { background: var(--neon-red); color: white; }
+.weapon-slot[data-index="1"].active .slot-ammo { color: var(--neon-red); text-shadow: 0 0 8px var(--neon-red); }
+
+.weapon-slot[data-index="2"].active { border-color: var(--neon-blue); background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4); }
+.weapon-slot[data-index="2"].active .slot-key { background: var(--neon-blue); color: #020308; }
+.weapon-slot[data-index="2"].active .slot-ammo { color: var(--neon-blue); text-shadow: 0 0 8px var(--neon-blue); }
+
+.weapon-slot[data-index="3"].active { border-color: var(--neon-purple); background: rgba(181, 55, 242, 0.15); box-shadow: 0 0 12px rgba(181, 55, 242, 0.4); }
+.weapon-slot[data-index="3"].active .slot-key { background: var(--neon-purple); color: white; }
+.weapon-slot[data-index="3"].active .slot-ammo { color: var(--neon-purple); text-shadow: 0 0 8px var(--neon-purple); }
+
+.weapon-slot[data-index="4"].active { border-color: var(--neon-green); background: rgba(0, 255, 136, 0.15); box-shadow: 0 0 12px rgba(0, 255, 136, 0.4); }
+.weapon-slot[data-index="4"].active .slot-key { background: var(--neon-green); color: #020308; }
+.weapon-slot[data-index="4"].active .slot-ammo { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
+
+.weapon-slot[data-index="5"].active { border-color: #00ffff; background: rgba(0, 255, 255, 0.15); box-shadow: 0 0 12px rgba(0, 255, 255, 0.45); }
+.weapon-slot[data-index="5"].active .slot-key { background: #00ffff; color: #020308; }
+.weapon-slot[data-index="5"].active .slot-ammo { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+
+.weapon-slot[data-index="6"].active { border-color: #9d00ff; background: rgba(157, 0, 255, 0.18); box-shadow: 0 0 14px rgba(157, 0, 255, 0.5); }
+.weapon-slot[data-index="6"].active .slot-key { background: #9d00ff; color: white; }
+.weapon-slot[data-index="6"].active .slot-ammo { color: #d070ff; text-shadow: 0 0 8px #d070ff; }
+
+/* Sağ Tık Mayın Durum Paneli (2 Çeşit) */
+.mine-panel {
+  margin-top: 6px;
+  background: rgba(255, 136, 0, 0.08);
+  border: 1px dashed var(--neon-orange);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mine-panel:hover {
+  background: rgba(255, 136, 0, 0.18);
+  border-style: solid;
+  box-shadow: 0 0 12px rgba(255, 136, 0, 0.4);
+}
+
+.mine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mine-tag {
+  font-size: 9px;
+  color: var(--neon-orange);
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.mine-ammo {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 6px var(--neon-orange);
+}
+
+.mine-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffe600;
+  letter-spacing: 0.5px;
+}
+
+/* Ses & Müzik Butonları */
+.icon-btn {
+  pointer-events: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(8px);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.icon-btn:hover {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 12px var(--neon-blue);
+  transform: translateY(-2px);
+}
+
+/* Alt Göstergeler (Kalkan, Gövde, İpucu) */
+.hud-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 540px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.bars-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.bar-container {
+  background: var(--panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+}
+
+.bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  letter-spacing: 1px;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.label-shield { color: var(--neon-cyan); }
+.label-hp { color: #00ff88; }
+
+.progress-bar {
+  width: 100%;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.12s ease-out;
+}
+
+.shield-bar .progress-fill {
+  background: linear-gradient(90deg, #0088ff, #00f0ff);
+  box-shadow: 0 0 10px #00f0ff;
+}
+
+.hp-bar .progress-fill {
+  background: linear-gradient(90deg, #ff0055, #00ff88);
+  box-shadow: 0 0 10px #00ff88;
+}
+
+.hud-help-tip {
+  text-align: center;
+  font-size: 11px;
+  color: #8fa0be;
+  letter-spacing: 0.8px;
+  font-family: 'Rajdhani', sans-serif;
+  background: rgba(4, 7, 18, 0.75);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.hud-help-tip strong {
+  color: var(--neon-cyan);
+}
+
+/* Mobil Kontroller */
+.mobile-controls-wrap {
+  display: none;
+  pointer-events: auto;
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  gap: 12px;
+  z-index: 50;
+}
+
+.mobile-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.thrust-btn {
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.85) 0%, rgba(0, 100, 200, 0.7) 100%);
+  border: 2px solid var(--neon-blue);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.6);
+}
+
+.fire-btn {
+  background: radial-gradient(circle, rgba(255, 42, 42, 0.85) 0%, rgba(157, 0, 255, 0.65) 100%);
+  border: 2px solid var(--neon-red);
+  box-shadow: 0 0 20px rgba(255, 42, 42, 0.6);
+}
+
+.mine-btn {
+  background: radial-gradient(circle, rgba(255, 136, 0, 0.85) 0%, rgba(180, 50, 0, 0.7) 100%);
+  border: 2px solid var(--neon-orange);
+  box-shadow: 0 0 18px rgba(255, 136, 0, 0.6);
+}
+
+.mobile-btn:active {
+  transform: scale(0.92);
+}
+
+@media (pointer: coarse) {
+  .mobile-controls-wrap {
+    display: flex;
+  }
+}
+
+/* Dalga & Seviye Bildirim Bandı */
+.banner-notification {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(5, 8, 20, 0.94);
+  border: 2px solid var(--neon-blue);
+  box-shadow: 0 0 45px rgba(0, 240, 255, 0.5);
+  border-radius: 12px;
+  padding: 16px 36px;
+  text-align: center;
+  z-index: 90;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.banner-notification.hidden {
+  opacity: 0;
+  transform: translate(-50%, -60%) scale(0.9);
+}
+
+.banner-notification h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 0 15px var(--neon-blue);
+  margin-bottom: 4px;
+}
+
+.banner-notification p {
+  color: #cbd5e1;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+/* Modallar / Overlay */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(2, 4, 10, 0.92);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+}
+
+.overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.overlay-card {
+  background: rgba(8, 14, 32, 0.96);
+  border: 1px solid var(--neon-blue);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.3), inset 0 0 30px rgba(0, 240, 255, 0.08);
+  padding: 32px 28px;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 90%;
+  text-align: center;
+  animation: cardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.level-card {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 45px rgba(0, 255, 136, 0.35);
+}
+
+.tech-tag {
+  display: inline-block;
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--neon-blue);
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.tech-tag.success {
+  color: var(--neon-green);
+  background: rgba(0, 255, 136, 0.12);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.tech-tag.danger {
+  color: var(--neon-red);
+  background: rgba(255, 42, 42, 0.12);
+  border-color: rgba(255, 42, 42, 0.5);
+}
+
+@keyframes cardPop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.neon-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px var(--neon-blue), 0 0 25px var(--neon-blue);
+  margin-bottom: 4px;
+}
+
+.lc-title {
+  color: var(--neon-green);
+  text-shadow: 0 0 12px var(--neon-green), 0 0 25px var(--neon-green);
+}
+
+.game-over-title {
+  color: #ff2a2a;
+  text-shadow: 0 0 12px var(--neon-pink), 0 0 30px var(--neon-red);
+}
+
+.subtitle {
+  color: #8fa0be;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.instruction-item .icon {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.results {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.result-row strong {
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+}
+
+.result-row.highlight strong {
+  color: var(--neon-yellow);
+  font-size: 18px;
+  text-shadow: 0 0 10px rgba(255, 230, 0, 0.8);
+}
+
+.bonus-tag {
+  color: var(--neon-green);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.neon-btn {
+  background: transparent;
+  color: var(--neon-blue);
+  border: 2px solid var(--neon-blue);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 2px;
+  padding: 13px 26px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: 100%;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+}
+
+.neon-btn:hover {
+  background: var(--neon-blue);
+  color: #04050d;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.9);
+  transform: translateY(-2px);
+}
+
+.neon-btn:active {
+  transform: translateY(0);
+}
+
+.neon-btn.secondary {
+  border-color: #ff3366;
+  color: #ff3366;
+  box-shadow: 0 0 14px rgba(255, 51, 102, 0.25);
+}
+
+.neon-btn.secondary:hover {
+  background: #ff3366;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(255, 51, 102, 0.8);
+}
+
+/* Küçük Ekranlar */
+@media (max-width: 768px) {
+  #weapon-inventory-bar {
+    top: auto;
+    bottom: 95px;
+    left: 10px;
+    flex-direction: row;
+    padding: 4px;
+    gap: 4px;
+  }
+  .weapon-slot {
+    min-width: 0;
+    padding: 4px 6px;
+  }
+  .weapon-slot .slot-name {
+    display: none;
+  }
+  .mine-panel {
+    margin-top: 0;
+    padding: 4px 6px;
+  }
+  .mine-tag {
+    display: none;
+  }
+  #radar-container {
+    display: none;
+  }
+}
+
+/* HANGAR GEMİ SEÇİM SİSTEMİ */
+.hangar-container {
+  margin: 14px 0 18px 0;
+  text-align: left;
+  background: rgba(4, 9, 24, 0.65);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
+}
+
+.hangar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.hangar-tag {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  letter-spacing: 1.5px;
+}
+
+.hangar-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.ship-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.ship-card {
+  background: rgba(10, 18, 38, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  user-select: none;
+}
+
+.ship-card:hover {
+  border-color: rgba(0, 240, 255, 0.6);
+  transform: translateY(-2px);
+  background: rgba(16, 28, 58, 0.95);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.ship-card.active {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.35), inset 0 0 10px rgba(0, 240, 255, 0.1);
+}
+
+.ship-card.active::after {
+  content: 'SEÇİLDİ ✓';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ship-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.viper-badge { color: #00f0ff; text-shadow: 0 0 8px #00f0ff; }
+.titan-badge { color: #ffaa00; text-shadow: 0 0 8px #ffaa00; }
+.phantom-badge { color: #d070ff; text-shadow: 0 0 8px #b537f2; }
+.phoenix-badge { color: #00ffaa; text-shadow: 0 0 8px #00ffaa; }
+
+.ship-role {
+  font-size: 10.5px;
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ship-specs {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-family: 'Orbitron', monospace;
+  color: #64748b;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 5px;
+}
+
+.ship-specs strong {
+  color: #fff;
+}

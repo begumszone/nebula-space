@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AETHER PROTOCOL - 40 Level Space Campaign</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Oyun İçi Arayüz (HUD) -->
+    <div id="hud">
+      <!-- Üst Bilgi Barı -->
+      <div class="hud-top">
+        <div class="stats-group">
+          <div class="stat-badge level-badge">
+            <span class="label">BÖLÜM</span>
+            <span id="level-display">1 / 40</span>
+          </div>
+          <div class="stat-badge">
+            <span class="label">TOPLAM SKOR</span>
+            <span id="score-display">0</span>
+          </div>
+          <div class="stat-badge">
+            <span class="label">SÜRE</span>
+            <span id="time-display">00:00</span>
+          </div>
+        </div>
+
+        <!-- Bölüm Görev İlerlemesi (Level Progress) -->
+        <div class="objective-card">
+          <div class="objective-header">
+            <span class="label">BÖLÜM HEDEFİ</span>
+            <span id="objective-text">0 / 12 DÜŞMAN</span>
+          </div>
+          <div class="objective-bar-wrap">
+            <div id="objective-fill" class="objective-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="stats-group right">
+          <button id="pause-btn" class="icon-btn" title="Oyunu Duraklat (ESC)">
+            <span>⏸️</span>
+          </button>
+          <button id="music-btn" class="icon-btn" title="Müziği Aç/Kapat">
+            <span id="music-icon">🎵</span>
+          </button>
+          <button id="sound-btn" class="icon-btn" title="Ses Efektlerini Aç/Kapat">
+            <span id="sound-icon">🔊</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sektör Radarı (Yerel Tarayıcı) -->
+      <div id="radar-container">
+        <canvas id="radarCanvas" width="130" height="130"></canvas>
+        <span class="radar-label">SEKTÖR RADARI (3000m)</span>
+      </div>
+
+      <!-- 7'li Silah Envanter Barı (Hotkeys 1-7 & Fare Tekerleği) -->
+      <div id="weapon-inventory-bar">
+        <div class="weapon-slot active" data-index="0" title="[1] Standart Plazma">
+          <span class="slot-key">1</span>
+          <span class="slot-name">PLAZMA</span>
+          <span class="slot-ammo">∞</span>
+        </div>
+        <div class="weapon-slot" data-index="1" title="[2] İkili Ağır Lazer">
+          <span class="slot-key">2</span>
+          <span class="slot-name">İKİLİ LAZER</span>
+          <span id="ammo-1" class="slot-ammo">140</span>
+        </div>
+        <div class="weapon-slot" data-index="2" title="[3] Güdümlü Torpido">
+          <span class="slot-key">3</span>
+          <span class="slot-name">FÜZE</span>
+          <span id="ammo-2" class="slot-ammo">24</span>
+        </div>
+        <div class="weapon-slot" data-index="3" title="[4] Saçma Plazma (Spread)">
+          <span class="slot-key">4</span>
+          <span class="slot-name">SAÇMA</span>
+          <span id="ammo-3" class="slot-ammo">90</span>
+        </div>
+        <div class="weapon-slot" data-index="4" title="[5] Ray Silahı (Railgun)">
+          <span class="slot-key">5</span>
+          <span class="slot-name">RAY SİLAHI</span>
+          <span id="ammo-4" class="slot-ammo">16</span>
+        </div>
+        <div class="weapon-slot" data-index="5" title="[6] Tesla Ark Topu (Zincirleme Şimşek)">
+          <span class="slot-key">6</span>
+          <span class="slot-name">TESLA ARK</span>
+          <span id="ammo-5" class="slot-ammo">70</span>
+        </div>
+        <div class="weapon-slot" data-index="6" title="[7] Kuantum Vorteks (Kara Delik Bombası)">
+          <span class="slot-key">7</span>
+          <span class="slot-name">VORTEKS</span>
+          <span id="ammo-6" class="slot-ammo">14</span>
+        </div>
+
+        <!-- Sağ Tık 2 Çeşit Mayın Durum Paneli -->
+        <div id="mine-panel" class="mine-panel" title="[SAĞ TIK]: Mayın Bırak | [Q/E]: Mayın Değiştir">
+          <div class="mine-header">
+            <span class="mine-tag">SAĞ TIK: MAYIN [Q/E]</span>
+            <span id="mine-ammo" class="mine-ammo">x8</span>
+          </div>
+          <span id="mine-name" class="mine-name">TERMONÜKLEER MAYIN</span>
+        </div>
+      </div>
+
+      <!-- Alt Göstergeler (Kalkan, Gövde, İpuçları) -->
+      <div class="hud-bottom">
+        <div class="bars-grid">
+          <div class="bar-container">
+            <div class="bar-info">
+              <span class="label-shield">KALKAN (SHIELD)</span>
+              <span id="shield-text">60 / 60</span>
+            </div>
+            <div class="progress-bar shield-bar">
+              <div id="shield-fill" class="progress-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="bar-container">
+            <div class="bar-info">
+              <span class="label-hp">GÖVDE (HULL)</span>
+              <span id="hp-text">100 / 100</span>
+            </div>
+            <div class="progress-bar hp-bar">
+              <div id="hp-fill" class="progress-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-help-tip">
+          <span>İTİCİ: <strong>SPACE</strong> &nbsp;|&nbsp; SOL TIK: <strong>SERİ ATEŞ</strong> &nbsp;|&nbsp; SİLAHLAR: <strong>1 - 7</strong> &nbsp;|&nbsp; SAĞ TIK: <strong>ALAN MAYINI [Q/E]</strong> &nbsp;|&nbsp; DURAKLAT: <strong>ESC</strong></span>
+        </div>
+      </div>
+
+      <!-- Mobil Kontroller -->
+      <div class="mobile-controls-wrap">
+        <button id="mobile-mine-btn" class="mobile-btn mine-btn">MAYIN</button>
+        <button id="mobile-thrust-btn" class="mobile-btn thrust-btn">İTİCİ</button>
+        <button id="mobile-fire-btn" class="mobile-btn fire-btn">ATEŞ</button>
+      </div>
+    </div>
+
+    <!-- Başlangıç / Bilgi Overlay -->
+    <div id="start-overlay" class="overlay">
+      <div class="overlay-card">
+        <div class="tech-tag">40 BÖLÜMLÜK UZAY HAREKÂTI</div>
+        <h1 class="neon-title">AETHER PROTOCOL</h1>
+        <p class="subtitle">Taktiksel Uzay Savaşı & İt Dalaşı Simülatörü</p>
+        
+        <div class="instructions">
+          <div class="instruction-item">
+            <span class="icon">🚀</span>
+            <span><strong>Uçuş:</strong> <strong>SPACE</strong> tuşu ile ileri hızlan. Fare ile geminin burnunu yönlendir.</span>
+          </div>
+          <div class="instruction-item">
+            <span class="icon">🖱️</span>
+            <span><strong>Seri Ateş (Sol Tık):</strong> Farenin sol tıkına kaç defa basarsan o kadar seri ateş açar.</span>
+          </div>
+          <div class="instruction-item">
+            <span class="icon">💣</span>
+            <span><strong>2 Çeşit Alan Mayını (Sağ Tık):</strong> <strong>Sağ tık</strong> ile bırak! <strong>Q / E</strong> ile <strong>Termonükleer Mayın</strong> veya <strong>EMP Şok Mayını</strong> seç. Düşman yaklaştığında devasa bir alandaki tüm filoyu yok eder!</span>
+          </div>
+          <div class="instruction-item">
+            <span class="icon">🧲</span>
+            <span><strong>İkmal & Hak Kitleri:</strong> Kapsüller bölüm başında haritaya yerleştirilmiştir ve düşmanları yok ettikçe ganimet olarak düşer. 280m yaklaştığında mıknatıs gibi gemine çekilir! Yeşil <strong>HAK / ONARIM KİTİ</strong> can, kalkan ve mayın tazeler.</span>
+          </div>
+          <div class="instruction-item">
+            <span class="icon">⚡</span>
+            <span><strong>Silah Evrimi (4 Tier):</strong> Bölümler ilerledikçe cephaneliğin evrilir ve güçlenir (Dörtlü Lazer, İkiz Güdümlü Füze, Vulcan ve Aether Işını)!</span>
+          </div>
+          <div class="instruction-item">
+            <span class="icon">⏸️</span>
+            <span><strong>Duraklatma:</strong> İstediğin zaman <strong>ESC</strong> tuşuyla oyunu durdurabilirsin.</span>
+          </div>
+          <div class="instruction-item">
+            <span class="icon">🎯</span>
+            <span><strong>40 Bölümlük Harekât:</strong> Her bölüm hedefi bittiğinde oyun durur ve kazandığın skoru gösterir.</span>
+          </div>
+        <!-- HANGAR GEMİ SEÇİM ALANI -->
+        <div class="hangar-container">
+          <div class="hangar-header">
+            <span class="hangar-tag">HANGAR / GEMİ SEÇİMİ</span>
+            <span class="hangar-sub">Taktiksel tarzına uygun savaş gemini seç:</span>
+          </div>
+          <div class="ship-grid">
+            <div class="ship-card active" data-ship="VIPER" title="Viper: Dengeli ve Çevik Önleme Avcısı">
+              <div class="ship-badge viper-badge">⚡ VIPER</div>
+              <div class="ship-role">Önleme Avcısı</div>
+              <div class="ship-specs">
+                <span>Hız: <strong>840</strong></span>
+                <span>Gövde: <strong>100</strong></span>
+                <span>Kalkan: <strong>60</strong></span>
+              </div>
+            </div>
+            <div class="ship-card" data-ship="TITAN" title="Titan: Ağır Zırhlı Dayanıklı Kruvazör">
+              <div class="ship-badge titan-badge">🛡️ TITAN</div>
+              <div class="ship-role">Ağır Kruvazör</div>
+              <div class="ship-specs">
+                <span>Hız: <strong>730</strong></span>
+                <span>Gövde: <strong>140</strong></span>
+                <span>Kalkan: <strong>85</strong></span>
+              </div>
+            </div>
+            <div class="ship-card" data-ship="PHANTOM" title="Phantom: Jilet Kanatlı Yüksek Hızlı Hayalet">
+              <div class="ship-badge phantom-badge">🔮 PHANTOM</div>
+              <div class="ship-role">Stealth Korvet</div>
+              <div class="ship-specs">
+                <span>Hız: <strong>890</strong></span>
+                <span>Gövde: <strong>80</strong></span>
+                <span>Kalkan: <strong>70</strong></span>
+              </div>
+            </div>
+            <div class="ship-card" data-ship="PHOENIX" title="Phoenix: Çift Gövdeli Yüksek Kalkanlı Avcı">
+              <div class="ship-badge phoenix-badge">🔥 PHOENIX</div>
+              <div class="ship-role">Katamaran Taarruz</div>
+              <div class="ship-specs">
+                <span>Hız: <strong>810</strong></span>
+                <span>Gövde: <strong>95</strong></span>
+                <span>Kalkan: <strong>95</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="start-btn" class="neon-btn">SEKTÖR 1'E BAŞLA</button>
+      </div>
+    </div>
+
+    <!-- DURAKLATMA (PAUSE) MODALI -->
+    <div id="pause-overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <div class="tech-tag">SİSTEM DURAKLATILDI</div>
+        <h1 class="neon-title">OYUN DURAKLATILDI</h1>
+        <p class="subtitle">Taktiksel Mola & Durum Analizi</p>
+        
+        <div class="results">
+          <div class="result-row">
+            <span>Mevcut Bölüm:</span>
+            <strong id="pause-level">Bölüm 1 / 40</strong>
+          </div>
+          <div class="result-row">
+            <span>Toplam Skor:</span>
+            <strong id="pause-score">0</strong>
+          </div>
+          <div class="result-row">
+            <span>Kalan Mayın:</span>
+            <strong id="pause-mines">x8</strong>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button id="resume-btn" class="neon-btn">DEVAM ET (ESC)</button>
+          <button id="pause-restart-btn" class="neon-btn secondary">BÖLÜMÜ YENİDEN BAŞLAT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BÖLÜM TAMAMLANDI (LEVEL COMPLETE) MODALI -->
+    <div id="level-complete-overlay" class="overlay hidden">
+      <div class="overlay-card level-card">
+        <div class="tech-tag success">SEKTÖR GÖREVİ BAŞARILI</div>
+        <h1 id="lc-title" class="neon-title lc-title">BÖLÜM 1 TAMAMLANDI</h1>
+        <p class="subtitle">Bölge temizlendi, sonraki sektöre rota çiziliyor</p>
+
+        <div class="results">
+          <div class="result-row highlight">
+            <span>Bu Bölümde Kazanılan Puan:</span>
+            <strong id="lc-level-score">+0</strong>
+          </div>
+          <div class="result-row">
+            <span>Toplam Skor:</span>
+            <strong id="lc-total-score">0</strong>
+          </div>
+          <div class="result-row">
+            <span>İmha Edilen Tehdit:</span>
+            <strong id="lc-kills">0</strong>
+          </div>
+          <div class="result-row bonus-row">
+            <span>İkmal Ödülü:</span>
+            <span class="bonus-tag">+35 Can, Kalkan Şarjı, +4 Mayın</span>
+          </div>
+        </div>
+
+        <button id="next-level-btn" class="neon-btn">SONRAKİ BÖLÜME GEÇ (SPACE)</button>
+      </div>
+    </div>
+
+    <!-- Oyun Bitti Overlay -->
+    <div id="game-over-overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <div class="tech-tag danger">SİNYAL KESİLDİ</div>
+        <h1 class="neon-title game-over-title">GEMİ KAYBEDİLDİ</h1>
+        <p class="subtitle">Derin uzayın karanlığında kayboldun...</p>
+        <div class="results">
+          <div class="result-row">
+            <span>Ulaşılan Bölüm:</span>
+            <strong id="final-wave">Bölüm 1 / 40</strong>
+          </div>
+          <div class="result-row">
+            <span>Toplam Skor:</span>
+            <strong id="final-score">0</strong>
+          </div>
+          <div class="result-row">
+            <span>Toplam Süre:</span>
+            <strong id="final-time">00:00</strong>
+          </div>
+          <div class="result-row">
+            <span>İmha Edilen Düşman:</span>
+            <strong id="final-kills">0</strong>
+          </div>
+        </div>
+        <button id="restart-btn" class="neon-btn">BÖLÜMÜ TEKRAR DENE</button>
+      </div>
+    </div>
+
+    <!-- Sektör Bildirimi -->
+    <div id="banner-notification" class="banner-notification hidden">
+      <h2 id="banner-title">YENİ TEHDİT!</h2>
+      <p id="banner-desc">Sektör taraması tamamlandı...</p>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
