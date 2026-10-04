@@ -1750,6 +1750,19 @@ class Game {
     this.isFiring = false;
     this.isThrusting = false;
 
+    // Mobil Sanal Joystick ve Dokunmatik Yönlendirme
+    this.joystick = {
+      active: false,
+      touchId: null,
+      baseX: 0,
+      baseY: 0,
+      curX: 0,
+      curY: 0,
+      radius: 56
+    };
+    this.mobileAimAngle = -Math.PI / 2;
+    this.hasMobileAim = false;
+
     // 40 Seviye Durumu
     this.currentLevel = 1;
     this.maxLevels = 40;
@@ -1820,6 +1833,7 @@ class Game {
       mobileFireBtn: document.getElementById('mobile-fire-btn'),
       mobileThrustBtn: document.getElementById('mobile-thrust-btn'),
       mobileMineBtn: document.getElementById('mobile-mine-btn'),
+      mobileWeaponBtn: document.getElementById('mobile-weapon-btn'),
       banner: document.getElementById('banner-notification'),
       bannerTitle: document.getElementById('banner-title'),
       bannerDesc: document.getElementById('banner-desc')
@@ -1987,30 +2001,145 @@ class Game {
       });
     });
 
-    // Mobil Butonlar
+    // --- MOBİL DOKUNMATİK BUTONLAR & SİSTEMLER ---
     if (this.dom.mobileFireBtn) {
       this.dom.mobileFireBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        this.audio.init();
         this.isFiring = true;
         if (this.player) this.player.tryShoot(0.2, this.bullets, this.particles, this.audio, true, this.getWeaponTier());
       });
       this.dom.mobileFireBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.isFiring = false; });
+      this.dom.mobileFireBtn.addEventListener('touchcancel', () => { this.isFiring = false; });
     }
 
     if (this.dom.mobileThrustBtn) {
-      this.dom.mobileThrustBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.isThrusting = true; });
+      this.dom.mobileThrustBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.audio.init();
+        this.isThrusting = true;
+      });
       this.dom.mobileThrustBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.isThrusting = false; });
+      this.dom.mobileThrustBtn.addEventListener('touchcancel', () => { this.isThrusting = false; });
+    }
+
+    if (this.dom.mobileWeaponBtn) {
+      this.dom.mobileWeaponBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.audio.init();
+        if (!this.player) return;
+        this.player.setWeaponIndex((this.player.weaponIndex + 1) % 7);
+        this.updateWeaponSlots();
+        this.audio.playPickup(false);
+      });
     }
 
     if (this.dom.mobileMineBtn) {
+      let mineTimer = null;
       this.dom.mobileMineBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        if (this.player) {
-          this.player.dropMine(this.mines, this.audio);
-          this.updateHUD();
+        this.audio.init();
+        mineTimer = setTimeout(() => {
+          if (this.player) {
+            this.player.toggleMine();
+            this.updateHUD();
+            this.showBanner('MAYIN DEĞİŞTİRİLDİ', this.player.mineIndex === 0 ? 'Termonükleer Mayın' : 'EMP Şok Mayını');
+          }
+          mineTimer = null;
+        }, 360);
+      });
+
+      this.dom.mobileMineBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (mineTimer) {
+          clearTimeout(mineTimer);
+          mineTimer = null;
+          if (this.player) {
+            const dropped = this.player.dropMine(this.mines, this.audio);
+            if (dropped) this.updateHUD();
+          }
         }
       });
     }
+
+    // --- MOBİL SANAL JOYSTICK (SOL BAŞPARMAK) & DOKUNMATİK NİŞAN ---
+    window.addEventListener('touchstart', (e) => {
+      if (!this.isRunning || this.isPaused || this.isLevelPaused) return;
+      this.audio.init();
+
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const target = touch.target;
+        if (target && target.closest && (target.closest('.mobile-btn') || target.closest('.icon-btn') || target.closest('.weapon-slot') || target.closest('.mine-panel') || target.closest('.overlay-card'))) {
+          continue;
+        }
+
+        // Ekranın sol %58'lik alanı sanal joystick'i başlatır
+        if (touch.clientX < this.viewWidth * 0.58) {
+          if (!this.joystick.active) {
+            this.joystick.active = true;
+            this.joystick.touchId = touch.identifier;
+            this.joystick.baseX = touch.clientX;
+            this.joystick.baseY = touch.clientY;
+            this.joystick.curX = touch.clientX;
+            this.joystick.curY = touch.clientY;
+            this.hasMobileAim = true;
+          }
+        } else {
+          // Sağ tarafa dokunulduğunda doğrudan o noktaya nişan alır
+          this.screenMouseX = touch.clientX;
+          this.screenMouseY = touch.clientY;
+          this.hasMobileAim = false;
+        }
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!this.isRunning || this.isPaused || this.isLevelPaused) return;
+
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (this.joystick.active && touch.identifier === this.joystick.touchId) {
+          const dx = touch.clientX - this.joystick.baseX;
+          const dy = touch.clientY - this.joystick.baseY;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist > 8) {
+            this.mobileAimAngle = Math.atan2(dy, dx);
+            this.hasMobileAim = true;
+          }
+
+          const maxR = this.joystick.radius;
+          if (dist > maxR) {
+            this.joystick.curX = this.joystick.baseX + (dx / dist) * maxR;
+            this.joystick.curY = this.joystick.baseY + (dy / dist) * maxR;
+          } else {
+            this.joystick.curX = touch.clientX;
+            this.joystick.curY = touch.clientY;
+          }
+        } else if (touch.clientX >= this.viewWidth * 0.58) {
+          const target = touch.target;
+          if (!target || !target.closest || !target.closest('.mobile-btn')) {
+            this.screenMouseX = touch.clientX;
+            this.screenMouseY = touch.clientY;
+            this.hasMobileAim = false;
+          }
+        }
+      }
+    }, { passive: false });
+
+    const endTouchHandler = (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (this.joystick.active && touch.identifier === this.joystick.touchId) {
+          this.joystick.active = false;
+          this.joystick.touchId = null;
+        }
+      }
+    };
+
+    window.addEventListener('touchend', endTouchHandler, { passive: false });
+    window.addEventListener('touchcancel', endTouchHandler, { passive: false });
 
     if (this.dom.startBtn) {
       this.dom.startBtn.addEventListener('click', () => {
@@ -2358,10 +2487,15 @@ class Game {
     this.camera.x = this.player.x - this.viewWidth / 2;
     this.camera.y = this.player.y - this.viewHeight / 2;
 
-    const targetAimAngle = Math.atan2(
-      this.screenMouseY - this.viewHeight / 2,
-      this.screenMouseX - this.viewWidth / 2
-    );
+    let targetAimAngle;
+    if (this.hasMobileAim && this.joystick && this.joystick.active) {
+      targetAimAngle = this.mobileAimAngle;
+    } else {
+      targetAimAngle = Math.atan2(
+        this.screenMouseY - this.viewHeight / 2,
+        this.screenMouseX - this.viewWidth / 2
+      );
+    }
 
     this.player.update(dt, targetAimAngle, this.isThrusting, this.particles);
 
@@ -2831,6 +2965,67 @@ class Game {
     if (this.player) this.player.draw(this.ctx, this.isThrusting);
 
     this.ctx.restore();
+
+    // Mobil Sanal Joystick (Sol Başparmak)
+    if (this.joystick && this.joystick.active) {
+      this.drawVirtualJoystick(this.ctx);
+    }
+  }
+
+  drawVirtualJoystick(ctx) {
+    ctx.save();
+    ctx.resetTransform?.();
+    const dpr = window.devicePixelRatio || 1;
+    ctx.scale(dpr, dpr);
+
+    const bx = this.joystick.baseX;
+    const by = this.joystick.baseY;
+    const cx = this.joystick.curX;
+    const cy = this.joystick.curY;
+    const r = this.joystick.radius;
+
+    // Dış Taban Halkası
+    ctx.beginPath();
+    ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#00f0ff';
+    ctx.stroke();
+
+    // 4 Yön Çentiği
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
+    [-Math.PI / 2, 0, Math.PI / 2, Math.PI].forEach((ang) => {
+      ctx.beginPath();
+      ctx.moveTo(bx + Math.cos(ang) * (r - 6), by + Math.sin(ang) * (r - 6));
+      ctx.lineTo(bx + Math.cos(ang) * (r + 6), by + Math.sin(ang) * (r + 6));
+      ctx.stroke();
+    });
+
+    // Çekme Vektörü
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(cx, cy);
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // İç Topuz (Knob)
+    ctx.beginPath();
+    ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(cx, cy, 3, cx, cy, 22);
+    grad.addColorStop(0, 'rgba(0, 240, 255, 0.95)');
+    grad.addColorStop(1, 'rgba(0, 100, 200, 0.7)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   gameLoop(currentTime) {
