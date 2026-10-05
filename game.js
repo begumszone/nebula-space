@@ -2100,6 +2100,34 @@ class Game {
       });
     });
 
+    // BAŞLANGIÇ EKRANI MOBİL SEKME GEÇİŞLERİ (Gemi Seçimi <-> Kontroller)
+    const tabBtns = document.querySelectorAll('.start-tab-btn');
+    const tabCols = document.querySelectorAll('.start-col');
+    const switchToHangarBtn = document.querySelector('.switch-to-hangar-btn');
+
+    const activateTab = (tabName) => {
+      tabBtns.forEach((b) => {
+        if (b.dataset.tab === tabName) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      tabCols.forEach((col) => {
+        if (col.dataset.tab === tabName) col.classList.add('tab-active');
+        else col.classList.remove('tab-active');
+      });
+    };
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activateTab(btn.dataset.tab);
+      });
+    });
+
+    if (switchToHangarBtn) {
+      switchToHangarBtn.addEventListener('click', () => {
+        activateTab('hangar');
+      });
+    }
+
     // FARE TIKLAMALARI
     window.addEventListener('mousedown', (e) => {
       if (!this.isRunning || this.isPaused || this.isLevelPaused) return;

@@ -154,92 +154,109 @@
 
     <!-- Başlangıç / Bilgi Overlay -->
     <div id="start-overlay" class="overlay">
-      <div class="overlay-card">
-        <div class="tech-tag">40 SEVİYELİK UZAY HAREKÂTI</div>
-        <h1 class="neon-title">NEBULA SPACE</h1>
-        <p class="subtitle">Taktiksel Uzay Savaşı & İt Dalaşı Simülatörü</p>
-        
-        <div class="instructions">
-          <div class="instruction-item">
-            <span class="icon">🚀</span>
-            <span><strong>Uçuş:</strong> <strong>SPACE</strong> tuşu ile ileri hızlan. Fare ile geminin burnunu yönlendir.</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">🖱️</span>
-            <span><strong>Seri Ateş (Sol Tık):</strong> Farenin sol tıkına kaç defa basarsan o kadar seri ateş açar.</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">💣</span>
-            <span><strong>2 Çeşit Alan Mayını (Sağ Tık):</strong> <strong>Sağ tık</strong> ile bırak! <strong>Q / E</strong> ile <strong>Termonükleer Mayın</strong> veya <strong>EMP Şok Mayını</strong> seç. Düşman yaklaştığında devasa bir alandaki tüm filoyu yok eder!</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">❤️</span>
-            <span><strong>İkmal & Hak Kitleri:</strong> Kapsüller seviye başında haritada sabit bekler ve düşmanlar yok edildikçe ganimet olarak düşer. Yeşil <strong>HAK / CAN KİTİ</strong> ekstra can (+1 Hak), kalkan ve mayın tazeler.</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">⚡</span>
-            <span><strong>Silah Evrimi (4 Tier):</strong> Seviyeler ilerledikçe cephaneliğin evrilir ve güçlenir (Dörtlü Lazer, İkiz Güdümlü Füze, Vulcan ve Nebula Işını)! En iyi silah mermisi bitene kadar korunur, bitince otomatik alt kademeye geçer.</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">⏸️</span>
-            <span><strong>Duraklatma:</strong> İstediğin zaman <strong>ESC</strong> tuşuyla oyunu durdurabilirsin.</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">🚀</span>
-            <span><strong>Taşıyıcı Ana Gemi & Warp Geçişi:</strong> Seviye hedefi tamamlandığında Taşıyıcı Savaş Gemisi portali açılır. İbreyi ve radarı takip edip gemiye giriş yaparak (Docking) sonraki seviyeye hiperuzay sıçraması yap!</span>
-          </div>
-          <div class="instruction-item">
-            <span class="icon">📱</span>
-            <span><strong>Mobil Kontroller:</strong> Ekranın sol tarafında parmağını kaydırarak sanal joystick ile yönlendir; sağdaki <strong>ATEŞ</strong>, <strong>İTİCİ</strong>, <strong>MAYIN</strong> ve <strong>SİLAH</strong> butonlarıyla savaş!</span>
-          </div>
-        </div>
-        <!-- HANGAR GEMİ SEÇİM ALANI -->
-        <div class="hangar-container">
-          <div class="hangar-header">
-            <span class="hangar-tag">HANGAR / GEMİ SEÇİMİ</span>
-            <span class="hangar-sub">Taktiksel tarzına uygun savaş gemini seç:</span>
-          </div>
-          <div class="ship-grid">
-            <div class="ship-card active" data-ship="VIPER" title="Viper: Dengeli ve Çevik Önleme Avcısı">
-              <div class="ship-badge viper-badge">⚡ VIPER</div>
-              <div class="ship-role">Önleme Avcısı</div>
-              <div class="ship-specs">
-                <span>Hız: <strong>840</strong></span>
-                <span>Gövde: <strong>100</strong></span>
-                <span>Kalkan: <strong>60</strong></span>
-              </div>
-            </div>
-            <div class="ship-card" data-ship="TITAN" title="Titan: Ağır Zırhlı Dayanıklı Kruvazör">
-              <div class="ship-badge titan-badge">🛡️ TITAN</div>
-              <div class="ship-role">Ağır Kruvazör</div>
-              <div class="ship-specs">
-                <span>Hız: <strong>730</strong></span>
-                <span>Gövde: <strong>140</strong></span>
-                <span>Kalkan: <strong>85</strong></span>
-              </div>
-            </div>
-            <div class="ship-card" data-ship="PHANTOM" title="Phantom: Jilet Kanatlı Yüksek Hızlı Hayalet">
-              <div class="ship-badge phantom-badge">🔮 PHANTOM</div>
-              <div class="ship-role">Stealth Korvet</div>
-              <div class="ship-specs">
-                <span>Hız: <strong>890</strong></span>
-                <span>Gövde: <strong>80</strong></span>
-                <span>Kalkan: <strong>70</strong></span>
-              </div>
-            </div>
-            <div class="ship-card" data-ship="PHOENIX" title="Phoenix: Çift Gövdeli Yüksek Kalkanlı Avcı">
-              <div class="ship-badge phoenix-badge">🔥 PHOENIX</div>
-              <div class="ship-role">Katamaran Taarruz</div>
-              <div class="ship-specs">
-                <span>Hız: <strong>810</strong></span>
-                <span>Gövde: <strong>95</strong></span>
-                <span>Kalkan: <strong>95</strong></span>
-              </div>
-            </div>
-          </div>
+      <div class="overlay-card start-card">
+        <div class="start-header">
+          <div class="tech-tag">40 SEVİYELİK UZAY HAREKÂTI</div>
+          <h1 class="neon-title">NEBULA SPACE</h1>
+          <p class="subtitle">Taktiksel Uzay Savaşı & İt Dalaşı Simülatörü</p>
         </div>
 
-        <button id="start-btn" class="neon-btn">SEVİYE 1'E BAŞLA</button>
+        <!-- Mobil Cihazlar İçin Hızlı Sekmeler -->
+        <div class="start-mobile-tabs">
+          <button class="start-tab-btn active" data-tab="hangar">🚀 GEMİ SEÇİMİ & BAŞLA</button>
+          <button class="start-tab-btn" data-tab="intel">📋 KONTROLLER & REHBER</button>
+        </div>
+
+        <div class="start-body-grid">
+          <!-- Sol Kolon: Taktik Kılavuz & Kontroller -->
+          <div class="start-col intel-col" data-tab="intel">
+            <div class="column-title">
+              <span class="icon">🎮</span>
+              <span>KONTROLLER & TAKTİK REHBERİ</span>
+            </div>
+            <div class="instructions-grid">
+              <div class="instruction-item">
+                <span class="icon">🚀</span>
+                <span><strong>Uçuş & İtki:</strong> <strong>SPACE</strong> (veya W / ↑) ile hızlan, fare ile burnu yönlendir.</span>
+              </div>
+              <div class="instruction-item">
+                <span class="icon">🖱️</span>
+                <span><strong>Seri Ateş:</strong> Farenin <strong>Sol Tıkı</strong> ile hedefe aralıksız mermi yağdır.</span>
+              </div>
+              <div class="instruction-item">
+                <span class="icon">💣</span>
+                <span><strong>Alan Mayınları:</strong> <strong>Sağ Tık</strong> ile bırak! <strong>Q / E</strong> ile Termonükleer veya EMP seç.</span>
+              </div>
+              <div class="instruction-item">
+                <span class="icon">❤️</span>
+                <span><strong>Hak & Can:</strong> 3 Can ile başlarsın. Yeşil <strong>HAK / CAN KİTİ</strong> ekstra can (+1 Hak) kazandırır.</span>
+              </div>
+              <div class="instruction-item">
+                <span class="icon">⚡</span>
+                <span><strong>Silah Hiyerarşisi:</strong> 7 silah! En güçlü mühimmat bitene kadar korunur, bitince alt silaha geçer.</span>
+              </div>
+              <div class="instruction-item">
+                <span class="icon">🛸</span>
+                <span><strong>Taşıyıcı Ana Gemi:</strong> Hedef tamamlandığında portala doğru uç ve merkezine giriş yap (Docking).</span>
+              </div>
+              <div class="instruction-item full-row">
+                <span class="icon">📱</span>
+                <span><strong>Mobil Cihazlar:</strong> Sol ekran sanal joystick ile yönlendir, sağdaki <strong>ATEŞ</strong>, <strong>İTİCİ</strong>, <strong>MAYIN</strong>, <strong>SİLAH</strong> butonlarıyla savaş!</span>
+              </div>
+            </div>
+            <button class="neon-btn secondary switch-to-hangar-btn mobile-only-btn" style="margin-top: 10px; padding: 10px 16px; font-size: 12px;">GEMİ SEÇİMİNE GEÇ ❯</button>
+          </div>
+
+          <!-- Sağ Kolon: Hangar Gemi Seçimi & Başlat Butonu -->
+          <div class="start-col hangar-col tab-active" data-tab="hangar">
+            <div class="hangar-container">
+              <div class="hangar-header">
+                <span class="hangar-tag">HANGAR / GEMİ SEÇİMİ</span>
+                <span class="hangar-sub">Tarzına uygun gemiyi seç:</span>
+              </div>
+              <div class="ship-grid">
+                <div class="ship-card active" data-ship="VIPER" title="Viper: Dengeli ve Çevik Önleme Avcısı">
+                  <div class="ship-badge viper-badge">⚡ VIPER</div>
+                  <div class="ship-role">Önleme Avcısı</div>
+                  <div class="ship-specs">
+                    <span>Hız: <strong>840</strong></span>
+                    <span>Gövde: <strong>100</strong></span>
+                    <span>Kalkan: <strong>60</strong></span>
+                  </div>
+                </div>
+                <div class="ship-card" data-ship="TITAN" title="Titan: Ağır Zırhlı Dayanıklı Kruvazör">
+                  <div class="ship-badge titan-badge">🛡️ TITAN</div>
+                  <div class="ship-role">Ağır Kruvazör</div>
+                  <div class="ship-specs">
+                    <span>Hız: <strong>730</strong></span>
+                    <span>Gövde: <strong>140</strong></span>
+                    <span>Kalkan: <strong>85</strong></span>
+                  </div>
+                </div>
+                <div class="ship-card" data-ship="PHANTOM" title="Phantom: Jilet Kanatlı Yüksek Hızlı Hayalet">
+                  <div class="ship-badge phantom-badge">🔮 PHANTOM</div>
+                  <div class="ship-role">Stealth Korvet</div>
+                  <div class="ship-specs">
+                    <span>Hız: <strong>890</strong></span>
+                    <span>Gövde: <strong>80</strong></span>
+                    <span>Kalkan: <strong>70</strong></span>
+                  </div>
+                </div>
+                <div class="ship-card" data-ship="PHOENIX" title="Phoenix: Çift Gövdeli Yüksek Kalkanlı Avcı">
+                  <div class="ship-badge phoenix-badge">🔥 PHOENIX</div>
+                  <div class="ship-role">Katamaran Taarruz</div>
+                  <div class="ship-specs">
+                    <span>Hız: <strong>810</strong></span>
+                    <span>Gövde: <strong>95</strong></span>
+                    <span>Kalkan: <strong>95</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button id="start-btn" class="neon-btn start-action-btn" tabindex="-1">SEVİYE 1'E BAŞLA (ENTER)</button>
+          </div>
+        </div>
       </div>
     </div>
 
