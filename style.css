@@ -131,18 +131,24 @@ html, body {
   text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
-/* Bölüm Görev Kartı (Objective Progress) */
+/* Bölüm Görev Kartı (Dual Objective Progress) */
 .objective-card {
   background: var(--panel-bg);
-  border: 1px solid rgba(255, 230, 0, 0.4);
+  border: 1px solid rgba(0, 240, 255, 0.4);
   backdrop-filter: blur(12px);
   padding: 6px 14px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
-  box-shadow: 0 4px 15px rgba(255, 230, 0, 0.15);
+  gap: 5px;
+  min-width: 230px;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.objective-card.ready {
+  border-color: #00ffaa;
+  box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
 }
 
 .objective-header {
@@ -150,7 +156,7 @@ html, body {
   justify-content: space-between;
   align-items: center;
   font-family: 'Orbitron', monospace;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -158,6 +164,58 @@ html, body {
   color: var(--neon-yellow);
   font-size: 9px;
   letter-spacing: 1px;
+}
+
+.objective-status {
+  font-size: 8.5px;
+  letter-spacing: 0.5px;
+  color: #ffaa00;
+  text-shadow: 0 0 8px rgba(255, 170, 0, 0.6);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 170, 0, 0.12);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+}
+
+.objective-status.ready {
+  color: #00ffaa;
+  text-shadow: 0 0 10px #00ffaa;
+  background: rgba(0, 255, 170, 0.15);
+  border-color: rgba(0, 255, 170, 0.6);
+  animation: pulse-border 1.5s infinite;
+}
+
+.objective-tasks {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'Orbitron', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a5f3fc;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.task-item .task-icon {
+  font-size: 11px;
+}
+
+.task-item.complete {
+  color: #00ffaa;
+  border-color: rgba(0, 255, 170, 0.5);
+  background: rgba(0, 255, 170, 0.12);
+  text-shadow: 0 0 8px rgba(0, 255, 170, 0.7);
 }
 
 .objective-bar-wrap {
@@ -170,9 +228,14 @@ html, body {
 
 .objective-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow));
-  box-shadow: 0 0 8px var(--neon-yellow);
+  background: linear-gradient(90deg, #00f0ff, #ffd700);
+  box-shadow: 0 0 8px #ffd700;
   transition: width 0.15s ease-out;
+}
+
+.objective-fill.ready {
+  background: linear-gradient(90deg, #00f0ff, #00ffaa);
+  box-shadow: 0 0 12px #00ffaa;
 }
 
 /* Radar (Minimap) */

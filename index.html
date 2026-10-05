@@ -37,10 +37,21 @@
         </div>
 
         <!-- Seviye Görev İlerlemesi (Level Progress) -->
+        <!-- Seviye Görev İlerlemesi (Dual Objective: Kuantum Çekirdekleri & Düşman Tehditleri) -->
         <div class="objective-card">
           <div class="objective-header">
             <span class="label">SEVİYE HEDEFİ</span>
-            <span id="objective-text">0 / 18 DÜŞMAN</span>
+            <span id="objective-status" class="objective-status">GÖREV SÜRÜYOR</span>
+          </div>
+          <div class="objective-tasks">
+            <div id="task-cores-wrap" class="task-item">
+              <span class="task-icon">💎</span>
+              <span id="task-cores-text">ÇEKİRDEK: 0 / 3</span>
+            </div>
+            <div id="task-enemies-wrap" class="task-item">
+              <span class="task-icon">👾</span>
+              <span id="task-enemies-text">TEHDİT: 0 / 18</span>
+            </div>
           </div>
           <div class="objective-bar-wrap">
             <div id="objective-fill" class="objective-fill" style="width: 0%;"></div>
@@ -196,8 +207,12 @@
                 <span><strong>Silah Hiyerarşisi:</strong> 7 silah! En güçlü mühimmat bitene kadar korunur, bitince alt silaha geçer.</span>
               </div>
               <div class="instruction-item">
+                <span class="icon">💎</span>
+                <span><strong>Kuantum Çekirdeği:</strong> Sektördeki tüm <strong>ÇEKİRDEKLERİ (💎)</strong> topla ve <strong>DÜŞMANLARI (👾)</strong> temizle. İkisi bitince Taşıyıcı Gemi gelir!</span>
+              </div>
+              <div class="instruction-item">
                 <span class="icon">🛸</span>
-                <span><strong>Taşıyıcı Ana Gemi:</strong> Hedef tamamlandığında portala doğru uç ve merkezine giriş yap (Docking).</span>
+                <span><strong>Taşıyıcı Ana Gemi:</strong> Görevler bitince pusulayı takip et ve savaş gemisi portalının merkezine giriş yap (Docking).</span>
               </div>
               <div class="instruction-item full-row">
                 <span class="icon">📱</span>
@@ -304,6 +319,10 @@
           <div class="result-row">
             <span>Toplam Skor:</span>
             <strong id="lc-total-score">0</strong>
+          </div>
+          <div class="result-row">
+            <span>Toplanan Kuantum Çekirdeği:</span>
+            <strong id="lc-cores" style="color: #ffd700; text-shadow: 0 0 10px #ffd700;">0 / 0</strong>
           </div>
           <div class="result-row">
             <span>İmha Edilen Tehdit:</span>

@@ -400,6 +400,27 @@ class AudioEngine {
       });
     } catch (e) {}
   }
+
+  playCorePickup() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // Kristal / Kuantum Akoru (E6, G#6, B6, E7)
+      const freqs = [1318.5, 1661.2, 1975.5, 2637.0];
+      freqs.forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const st = now + i * 0.055;
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, st);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.08, st + 0.35);
+        gain.gain.setValueAtTime(0.12, st);
+        gain.gain.exponentialRampToValueAtTime(0.001, st + 0.4);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(st); osc.stop(st + 0.4);
+      });
+    } catch (e) {}
+  }
 }
 
 // --- 3. PARTİKÜL SİSTEMİ ---
@@ -737,6 +758,128 @@ class SupplyPickup {
     ctx.shadowBlur = 10;
     ctx.shadowColor = this.color;
     ctx.fillText(this.name, 0, 28);
+    ctx.restore();
+  }
+}
+
+// --- 5.5 SEVİYE GÖREV HEDEFİ: KUANTUM ÇEKİRDEĞİ (QUANTUM CORE) ---
+class QuantumCore {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 22;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.pulse = Math.random() * Math.PI * 2;
+    this.color = '#00f0ff';
+    this.gold = '#ffd700';
+    this.glowTimer = 0;
+  }
+
+  update(dt, particles) {
+    this.rotation += dt * 2.2;
+    this.pulse += dt * 4;
+    this.glowTimer += dt;
+
+    if (Math.random() < dt * 5 && particles) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 16 + 6;
+      particles.push(new Particle(
+        this.x + Math.cos(angle) * dist,
+        this.y + Math.sin(angle) * dist,
+        Math.random() > 0.5 ? '#00f0ff' : '#ffd700',
+        Math.random() * 2.5 + 1.2,
+        Math.random() * 25 + 10,
+        angle,
+        0.55
+      ));
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+
+    const scale = 1 + Math.sin(this.pulse) * 0.12;
+    ctx.scale(scale, scale);
+
+    // 1. Dış Parıldayan Enerji Halesi & Yörünge Halkası
+    ctx.save();
+    ctx.rotate(this.rotation * 0.7);
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.65)';
+    ctx.lineWidth = 1.8;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 24, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 4 Kuantum Yörünge Düğümü
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2;
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * 24, Math.sin(a) * 24, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 2. Ters Dönen Altın Kuantum Elips Halkası
+    ctx.save();
+    ctx.rotate(-this.rotation * 1.2);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2.2;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ffd700';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 18, 9, Math.PI / 4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Merkez Kristal / Elmas (Kuantum Çekirdeği)
+    ctx.save();
+    ctx.rotate(this.rotation * 0.4);
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = '#00ffff';
+    const grad = ctx.createLinearGradient(-14, -14, 14, 14);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.35, '#00ffff');
+    grad.addColorStop(0.7, '#0088ff');
+    grad.addColorStop(1, '#ffd700');
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(0, -16);
+    ctx.lineTo(13, 0);
+    ctx.lineTo(0, 16);
+    ctx.lineTo(-13, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Kristal İç Faset Çizgileri
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -16);
+    ctx.lineTo(0, 16);
+    ctx.moveTo(-13, 0);
+    ctx.lineTo(13, 0);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
+
+    // Başlık Etiketi
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.font = 'bold 9px Orbitron, sans-serif';
+    ctx.fillStyle = '#ffd700';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#ffd700';
+    ctx.fillText('KUANTUM ÇEKİRDEĞİ 💎', 0, 36);
     ctx.restore();
   }
 }
@@ -1913,6 +2056,7 @@ class Game {
     this.mines = [];
     this.particles = [];
     this.shockwaves = [];
+    this.quantumCores = [];
 
     // Taşıyıcı Savaş Gemisi & Warp Portalı Sistemi
     this.portal = null;
@@ -1947,11 +2091,13 @@ class Game {
     this.mobileAimAngle = -Math.PI / 2;
     this.hasMobileAim = false;
 
-    // 40 Seviye Durumu
+    // 40 Seviye Durumu & Görev Hedefleri
     this.currentLevel = 1;
     this.maxLevels = 40;
     this.levelGoal = 12;
     this.levelKills = 0;
+    this.levelCoresGoal = 3;
+    this.levelCoresCollected = 0;
     this.levelScore = 0;
     this.totalScore = 0;
     this.totalKills = 0;
@@ -1980,6 +2126,12 @@ class Game {
       livesDisplay: document.getElementById('lives-display'),
       scoreDisplay: document.getElementById('score-display'),
       timeDisplay: document.getElementById('time-display'),
+      objectiveCard: document.querySelector('.objective-card'),
+      objectiveStatus: document.getElementById('objective-status'),
+      taskCoresText: document.getElementById('task-cores-text'),
+      taskCoresWrap: document.getElementById('task-cores-wrap'),
+      taskEnemiesText: document.getElementById('task-enemies-text'),
+      taskEnemiesWrap: document.getElementById('task-enemies-wrap'),
       objectiveText: document.getElementById('objective-text'),
       objectiveFill: document.getElementById('objective-fill'),
       shieldText: document.getElementById('shield-text'),
@@ -2014,6 +2166,7 @@ class Game {
       lcLevelScore: document.getElementById('lc-level-score'),
       lcTotalScore: document.getElementById('lc-total-score'),
       lcKills: document.getElementById('lc-kills'),
+      lcCores: document.getElementById('lc-cores'),
       nextLevelBtn: document.getElementById('next-level-btn'),
       gameOverOverlay: document.getElementById('game-over-overlay'),
       finalScore: document.getElementById('final-score'),
@@ -2512,6 +2665,8 @@ class Game {
     this.currentLevel = lvl;
     this.levelGoal = 18 + lvl * 4;
     this.levelKills = 0;
+    this.levelCoresGoal = Math.min(7, 3 + Math.floor(lvl * 0.25));
+    this.levelCoresCollected = 0;
     this.levelScore = 0;
 
     this.enemies = [];
@@ -2519,6 +2674,7 @@ class Game {
     this.mines = [];
     this.pickups = [];
     this.shockwaves = [];
+    this.quantumCores = [];
     this.spawnTimer = 0;
     this.isBonusLevel = false;
 
@@ -2539,6 +2695,15 @@ class Game {
 
     const tier = this.getWeaponTier();
     const theme = this.getSectorTheme(lvl);
+
+    // Kuantum Çekirdeklerini (Görev Hedeflerini) Sektöre Dağıt (520m - 1320m keşif mesafesi)
+    for (let c = 0; c < this.levelCoresGoal; c++) {
+      const angle = (c * (Math.PI * 2) / this.levelCoresGoal) + (Math.random() - 0.5) * 0.45;
+      const dist = 520 + Math.random() * 800;
+      const cx = this.player.x + Math.cos(angle) * dist;
+      const cy = this.player.y + Math.sin(angle) * dist;
+      this.quantumCores.push(new QuantumCore(cx, cy));
+    }
 
     // Seviye Başlangıç Sabit İkmal İstasyonları
     // 1. Can / Onarım Kiti (Sol geride)
@@ -2587,7 +2752,7 @@ class Game {
       ];
       this.showBanner(tierTitles[tier], tierDescs[tier]);
     } else {
-      this.showBanner(`SEVİYE ${lvl} / ${this.maxLevels}`, `Bölge: ${theme.name} • Hedef: ${this.levelGoal} Düşman`);
+      this.showBanner(`SEVİYE ${lvl} / ${this.maxLevels}`, `Bölge: ${theme.name} • ${this.levelCoresGoal} Kuantum Çekirdeği Topla & ${this.levelGoal} Tehdit İmha Et!`);
     }
   }
 
@@ -2601,6 +2766,9 @@ class Game {
     this.mines = [];
     this.pickups = [];
     this.shockwaves = [];
+    this.quantumCores = [];
+    this.levelCoresGoal = 0;
+    this.levelCoresCollected = 0;
     this.portal = null;
     this.warpState = 'NONE';
 
@@ -2657,6 +2825,7 @@ class Game {
     if (this.dom.lcLevelScore) this.dom.lcLevelScore.textContent = `+${this.bonusPickupsCollected * 250}`;
     if (this.dom.lcTotalScore) this.dom.lcTotalScore.textContent = `${this.totalScore}`;
     if (this.dom.lcKills) this.dom.lcKills.textContent = `${this.bonusPickupsCollected} Kapsül Toplandı`;
+    if (this.dom.lcCores) this.dom.lcCores.textContent = 'Gerekli Değil (Bonus)';
     if (this.dom.lcNextZone) {
       this.dom.lcNextZone.textContent = `Seviye ${nextLvl}: ${nextTheme.name}`;
       this.dom.lcNextZone.style.color = nextTheme.starColor;
@@ -2732,6 +2901,14 @@ class Game {
     }
   }
 
+  // ÇİFTE GÖREV KONTROLÜ: HEM KUANTUM ÇEKİRDEKLERİ TOPLANMALI HEM DE SEKTÖR TEHDİTLERİ TEMİZLENMELİ
+  checkLevelObjectives() {
+    if (this.portal || this.isBonusLevel) return;
+    if (this.levelCoresCollected >= this.levelCoresGoal && this.levelKills >= this.levelGoal) {
+      this.openMothershipPortal();
+    }
+  }
+
   // HEDEF TAMAMLANDIĞINDA TAŞIYICI GEMİ VE WARP PORTALI BELİRİR
   openMothershipPortal() {
     if (this.portal) return;
@@ -2744,7 +2921,7 @@ class Game {
 
     this.portal = new MothershipGate(px, py);
     this.audio.playPortalOpen();
-    this.showBanner('SEVİYE TEMİZLENDİ!', 'Taşıyıcı Ana Gemi Geldi! İbreyi Takip Edin ve Portala Giriş Yapın.');
+    this.showBanner('TÜM HEDEFLER TAMAMLANDI! 🛸', 'Taşıyıcı Ana Gemi Geldi! İbreyi Takip Edin ve Portala Giriş Yapın.');
   }
 
   triggerLevelComplete() {
@@ -2761,6 +2938,7 @@ class Game {
     if (this.dom.lcSubtitle) this.dom.lcSubtitle.textContent = 'Taşıyıcı ana gemiye dönüldü, hiperuzay sıçraması hazır';
     if (this.dom.lcLevelScore) this.dom.lcLevelScore.textContent = `+${this.levelScore}`;
     if (this.dom.lcTotalScore) this.dom.lcTotalScore.textContent = `${this.totalScore}`;
+    if (this.dom.lcCores) this.dom.lcCores.textContent = `${this.levelCoresCollected} / ${this.levelCoresGoal} (Tamamlandı)`;
     if (this.dom.lcKills) this.dom.lcKills.textContent = `${this.levelKills} Düşman`;
     if (this.dom.lcNextZone) {
       if (this.currentLevel % 4 === 0) {
@@ -2965,10 +3143,7 @@ class Game {
           this.totalScore += pts;
           this.dropEnemyLoot(e);
           this.enemies.splice(i, 1);
-
-          if (this.levelKills >= this.levelGoal && !this.portal) {
-            this.openMothershipPortal();
-          }
+          this.checkLevelObjectives();
         }
       }
     }
@@ -3141,9 +3316,7 @@ class Game {
               this.totalScore += 120;
               this.dropEnemyLoot(e);
               this.enemies.splice(j, 1);
-              if (this.levelKills >= this.levelGoal && !this.portal) {
-                this.openMothershipPortal();
-              }
+              this.checkLevelObjectives();
             }
           }
         }
@@ -3227,10 +3400,7 @@ class Game {
             this.totalScore += pts;
             this.dropEnemyLoot(e);
             this.enemies.splice(j, 1);
-
-            if (this.levelKills >= this.levelGoal && !this.portal) {
-              this.openMothershipPortal();
-            }
+            this.checkLevelObjectives();
           }
 
           b.pierce--;
@@ -3329,6 +3499,33 @@ class Game {
       }
     }
 
+    // Kuantum Çekirdeklerinin Güncellenmesi ve Toplanması (Seviye Görevi)
+    for (let i = this.quantumCores.length - 1; i >= 0; i--) {
+      const core = this.quantumCores[i];
+      core.update(dt, this.particles);
+
+      const dist = Math.hypot(core.x - this.player.x, core.y - this.player.y);
+      if (dist < core.radius + this.player.radius + 18) {
+        this.levelCoresCollected++;
+        this.levelScore += 500;
+        this.totalScore += 500;
+        this.audio.playCorePickup();
+        this.createExplosion(core.x, core.y, '#00f0ff', 24);
+        this.createExplosion(core.x, core.y, '#ffd700', 20);
+        this.shockwaves.push(new Shockwave(core.x, core.y, 160, '#00f0ff'));
+        this.quantumCores.splice(i, 1);
+
+        const remCores = this.levelCoresGoal - this.levelCoresCollected;
+        if (remCores > 0) {
+          this.showBanner('KUANTUM ÇEKİRDEĞİ TOPLANDI! 💎', `Kalan: ${remCores} Çekirdek • Kalan Tehdit: ${Math.max(0, this.levelGoal - this.levelKills)}`);
+        } else {
+          this.showBanner('TÜM ÇEKİRDEKLER TOPLANDI! 💎✓', this.levelKills >= this.levelGoal ? 'Taşıyıcı Ana Gemi Geliyor!' : `Kalan Düşmanları Temizleyin (${this.levelKills}/${this.levelGoal})`);
+        }
+
+        this.checkLevelObjectives();
+      }
+    }
+
     // Partiküller
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
@@ -3380,17 +3577,87 @@ class Game {
       this.dom.timeDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
+    // Görev Durumu Badge & Kart Stili
+    if (this.dom.objectiveStatus) {
+      if (this.portal) {
+        this.dom.objectiveStatus.textContent = 'PORTAL AÇIK • DOCKING';
+        this.dom.objectiveStatus.classList.add('ready');
+      } else if (this.isBonusLevel) {
+        this.dom.objectiveStatus.textContent = 'İKMAL TOPLAMA';
+        this.dom.objectiveStatus.classList.remove('ready');
+      } else if (this.levelCoresCollected >= this.levelCoresGoal && this.levelKills >= this.levelGoal) {
+        this.dom.objectiveStatus.textContent = 'PORTAL BEKLENİYOR';
+        this.dom.objectiveStatus.classList.add('ready');
+      } else {
+        this.dom.objectiveStatus.textContent = 'GÖREV SÜRÜYOR';
+        this.dom.objectiveStatus.classList.remove('ready');
+      }
+    }
+
+    if (this.dom.objectiveCard) {
+      if (this.portal) {
+        this.dom.objectiveCard.classList.add('ready');
+      } else {
+        this.dom.objectiveCard.classList.remove('ready');
+      }
+    }
+
+    // Görev 1: Kuantum Çekirdekleri
+    if (this.dom.taskCoresText) {
+      if (this.isBonusLevel) {
+        this.dom.taskCoresText.textContent = `ÇEKİRDEK: YOK`;
+        if (this.dom.taskCoresWrap) this.dom.taskCoresWrap.classList.remove('complete');
+      } else {
+        const coresDone = this.levelCoresCollected >= this.levelCoresGoal;
+        this.dom.taskCoresText.textContent = `ÇEKİRDEK: ${this.levelCoresCollected} / ${this.levelCoresGoal}${coresDone ? ' ✓' : ''}`;
+        if (this.dom.taskCoresWrap) {
+          if (coresDone) this.dom.taskCoresWrap.classList.add('complete');
+          else this.dom.taskCoresWrap.classList.remove('complete');
+        }
+      }
+    }
+
+    // Görev 2: Tehdit Temizleme
+    if (this.dom.taskEnemiesText) {
+      if (this.isBonusLevel) {
+        this.dom.taskEnemiesText.textContent = `SÜRE: ${Math.ceil(this.bonusTimer)}s`;
+        if (this.dom.taskEnemiesWrap) this.dom.taskEnemiesWrap.classList.remove('complete');
+      } else {
+        const enemiesDone = this.levelKills >= this.levelGoal;
+        this.dom.taskEnemiesText.textContent = `TEHDİT: ${this.levelKills} / ${this.levelGoal}${enemiesDone ? ' ✓' : ''}`;
+        if (this.dom.taskEnemiesWrap) {
+          if (enemiesDone) this.dom.taskEnemiesWrap.classList.add('complete');
+          else this.dom.taskEnemiesWrap.classList.remove('complete');
+        }
+      }
+    }
+
     if (this.dom.objectiveText) {
       if (this.isBonusLevel) {
         this.dom.objectiveText.textContent = `İKMAL TOPLA: ${this.bonusPickupsCollected} KAPSÜL (${Math.ceil(this.bonusTimer)}s)`;
       } else {
-        this.dom.objectiveText.textContent = `${this.levelKills} / ${this.levelGoal} DÜŞMAN`;
+        this.dom.objectiveText.textContent = `💎 ${this.levelCoresCollected}/${this.levelCoresGoal} • 👾 ${this.levelKills}/${this.levelGoal}`;
       }
     }
-    const objPct = this.isBonusLevel
-      ? Math.max(0, (this.bonusTimer / 20.0) * 100)
-      : Math.min(100, (this.levelKills / this.levelGoal) * 100);
-    if (this.dom.objectiveFill) this.dom.objectiveFill.style.width = `${objPct}%`;
+
+    // İlerleme Çubuğu: Çekirdekler %50 + Tehditler %50
+    let objPct = 0;
+    if (this.isBonusLevel) {
+      objPct = Math.max(0, (this.bonusTimer / 20.0) * 100);
+    } else {
+      const coresPct = Math.min(1, this.levelCoresCollected / Math.max(1, this.levelCoresGoal));
+      const killsPct = Math.min(1, this.levelKills / Math.max(1, this.levelGoal));
+      objPct = Math.min(100, Math.round((coresPct * 0.5 + killsPct * 0.5) * 100));
+    }
+
+    if (this.dom.objectiveFill) {
+      this.dom.objectiveFill.style.width = `${objPct}%`;
+      if (objPct >= 100 || this.portal) {
+        this.dom.objectiveFill.classList.add('ready');
+      } else {
+        this.dom.objectiveFill.classList.remove('ready');
+      }
+    }
 
     const shieldPct = Math.max(0, (this.player.shield / this.player.maxShield) * 100);
     if (this.dom.shieldFill) this.dom.shieldFill.style.width = `${shieldPct}%`;
@@ -3471,6 +3738,32 @@ class Game {
       }
     }
 
+    // Kuantum Çekirdekleri (Radarda Parlayan Altın Elmas Simgesi)
+    for (const core of this.quantumCores) {
+      const rx = (core.x - this.player.x) * scale + w / 2;
+      const ry = (core.y - this.player.y) * scale + h / 2;
+      if (rx >= 0 && rx <= w && ry >= 0 && ry <= h) {
+        ctx.save();
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#ffd700';
+        ctx.beginPath();
+        ctx.moveTo(rx, ry - 4);
+        ctx.lineTo(rx + 3.5, ry);
+        ctx.lineTo(rx, ry + 4);
+        ctx.lineTo(rx - 3.5, ry);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(rx, ry, 5.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     // Taşıyıcı Savaş Gemisi Portalı (Radar üzerinde parlayan altın/mavi hedef)
     if (this.portal) {
       const rx = (this.portal.x - this.player.x) * scale + w / 2;
@@ -3532,67 +3825,136 @@ class Game {
     this.ctx.restore();
   }
 
-  // TAŞIYICI SAVAŞ GEMİSİ HEDEF GÖSTERGE OKU VE MESAFE SAYACI
+  // TAŞIYICI SAVAŞ GEMİSİ & EN YAKIN KUANTUM ÇEKİRDEĞİ HEDEF GÖSTERGE OKU VE MESAFE SAYACI
   drawPortalBeacon(ctx) {
-    if (!this.portal || !this.player || this.portal.docked) return;
+    if (!this.player) return;
 
-    const dx = this.portal.x - this.player.x;
-    const dy = this.portal.y - this.player.y;
-    const dist = Math.hypot(dx, dy);
+    // 1. Taşıyıcı Savaş Gemisi Portalı Açılmışsa Ona Yönlendir
+    if (this.portal && !this.portal.docked) {
+      const dx = this.portal.x - this.player.x;
+      const dy = this.portal.y - this.player.y;
+      const dist = Math.hypot(dx, dy);
 
-    const centerX = this.viewWidth / 2;
-    const centerY = this.viewHeight / 2;
-    const angle = Math.atan2(dy, dx);
+      const centerX = this.viewWidth / 2;
+      const centerY = this.viewHeight / 2;
+      const angle = Math.atan2(dy, dx);
 
-    const screenX = this.portal.x - this.camera.x;
-    const screenY = this.portal.y - this.camera.y;
+      const screenX = this.portal.x - this.camera.x;
+      const screenY = this.portal.y - this.camera.y;
 
-    const margin = 80;
-    const isOffScreen = screenX < margin || screenX > this.viewWidth - margin ||
-                        screenY < margin || screenY > this.viewHeight - margin;
+      const margin = 80;
+      const isOffScreen = screenX < margin || screenX > this.viewWidth - margin ||
+                          screenY < margin || screenY > this.viewHeight - margin;
 
-    ctx.save();
-    if (isOffScreen) {
-      // Ekran kenarına ibre/ok sabitleme
-      const clampX = Math.max(margin, Math.min(this.viewWidth - margin, centerX + Math.cos(angle) * (this.viewWidth / 2 - margin)));
-      const clampY = Math.max(margin, Math.min(this.viewHeight - margin, centerY + Math.sin(angle) * (this.viewHeight / 2 - margin)));
+      ctx.save();
+      if (isOffScreen) {
+        const clampX = Math.max(margin, Math.min(this.viewWidth - margin, centerX + Math.cos(angle) * (this.viewWidth / 2 - margin)));
+        const clampY = Math.max(margin, Math.min(this.viewHeight - margin, centerY + Math.sin(angle) * (this.viewHeight / 2 - margin)));
 
-      ctx.translate(clampX, clampY);
-      ctx.rotate(angle);
+        ctx.translate(clampX, clampY);
+        ctx.rotate(angle);
 
-      // Neon üçgen ibre
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = '#00f0ff';
-      ctx.fillStyle = '#00f0ff';
-      ctx.beginPath();
-      ctx.moveTo(24, 0);
-      ctx.lineTo(-14, -13);
-      ctx.lineTo(-6, 0);
-      ctx.lineTo(-14, 13);
-      ctx.closePath();
-      ctx.fill();
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = '#00f0ff';
+        ctx.fillStyle = '#00f0ff';
+        ctx.beginPath();
+        ctx.moveTo(24, 0);
+        ctx.lineTo(-14, -13);
+        ctx.lineTo(-6, 0);
+        ctx.lineTo(-14, 13);
+        ctx.closePath();
+        ctx.fill();
 
-      // Mesafe Bilgisi
-      ctx.rotate(-angle);
-      ctx.font = 'bold 12px Orbitron, sans-serif';
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#00f0ff';
-      ctx.fillText(`${Math.round(dist)}m`, 0, -22);
-      ctx.font = 'bold 9px Rajdhani, sans-serif';
-      ctx.fillStyle = '#00ffaa';
-      ctx.fillText('PORTAL', 0, 26);
-    } else {
-      // Ekranda görünürken portal üstünde iniş kılavuzu
-      ctx.font = 'bold 12px Orbitron, sans-serif';
-      ctx.fillStyle = '#00ffaa';
-      ctx.textAlign = 'center';
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = '#00ffaa';
-      ctx.fillText(`▼ DOCKING HEDEFİ (${Math.round(dist)}m)`, screenX, screenY - 140);
+        ctx.rotate(-angle);
+        ctx.font = 'bold 12px Orbitron, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00f0ff';
+        ctx.fillText(`${Math.round(dist)}m`, 0, -22);
+        ctx.font = 'bold 9px Rajdhani, sans-serif';
+        ctx.fillStyle = '#00ffaa';
+        ctx.fillText('PORTAL', 0, 26);
+      } else {
+        ctx.font = 'bold 12px Orbitron, sans-serif';
+        ctx.fillStyle = '#00ffaa';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#00ffaa';
+        ctx.fillText(`▼ DOCKING HEDEFİ (${Math.round(dist)}m)`, screenX, screenY - 140);
+      }
+      ctx.restore();
+      return;
     }
-    ctx.restore();
+
+    // 2. Kuantum Çekirdekleri Varsa En Yakın Çekirdeğe Navigasyon Oku (Keşif Yardımı)
+    if (!this.portal && !this.isBonusLevel && this.quantumCores.length > 0) {
+      let nearest = null;
+      let minDist = Infinity;
+      for (const core of this.quantumCores) {
+        const d = Math.hypot(core.x - this.player.x, core.y - this.player.y);
+        if (d < minDist) {
+          minDist = d;
+          nearest = core;
+        }
+      }
+
+      if (!nearest) return;
+
+      const dx = nearest.x - this.player.x;
+      const dy = nearest.y - this.player.y;
+      const dist = minDist;
+      const angle = Math.atan2(dy, dx);
+
+      const screenX = nearest.x - this.camera.x;
+      const screenY = nearest.y - this.camera.y;
+
+      const margin = 80;
+      const isOffScreen = screenX < margin || screenX > this.viewWidth - margin ||
+                          screenY < margin || screenY > this.viewHeight - margin;
+
+      ctx.save();
+      if (isOffScreen) {
+        const centerX = this.viewWidth / 2;
+        const centerY = this.viewHeight / 2;
+        const clampX = Math.max(margin, Math.min(this.viewWidth - margin, centerX + Math.cos(angle) * (this.viewWidth / 2 - margin)));
+        const clampY = Math.max(margin, Math.min(this.viewHeight - margin, centerY + Math.sin(angle) * (this.viewHeight / 2 - margin)));
+
+        ctx.translate(clampX, clampY);
+        ctx.rotate(angle);
+
+        // Altın / Kuantum Pusula Oku
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#ffd700';
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.moveTo(22, 0);
+        ctx.lineTo(-12, -10);
+        ctx.lineTo(-5, 0);
+        ctx.lineTo(-12, 10);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.rotate(-angle);
+        ctx.font = 'bold 11px Orbitron, sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffd700';
+        ctx.fillText(`${Math.round(dist)}m`, 0, -20);
+        ctx.font = 'bold 9px Rajdhani, sans-serif';
+        ctx.fillStyle = '#00f0ff';
+        ctx.fillText('💎 ÇEKİRDEK', 0, 24);
+      } else {
+        ctx.font = 'bold 11px Orbitron, sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffd700';
+        ctx.fillText(`▼ KUANTUM ÇEKİRDEĞİ (${Math.round(dist)}m)`, screenX, screenY - 45);
+      }
+      ctx.restore();
+    }
   }
 
   // HİPERUZAY WARP GEÇİŞ EFEKTİ (STAR STREAKS & FLASH)
@@ -3721,6 +4083,9 @@ class Game {
 
     // Mayınlar
     for (const m of this.mines) m.draw(this.ctx);
+
+    // Kuantum Çekirdekleri (Görev Hedefleri)
+    for (const c of this.quantumCores) c.draw(this.ctx);
 
     // İkmal Kapsülleri (7 Silah + Hak)
     for (const p of this.pickups) p.draw(this.ctx);
