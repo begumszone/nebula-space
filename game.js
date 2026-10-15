@@ -2078,17 +2078,32 @@ class Player {
     if (idx >= 0 && idx < 7) this.weaponIndex = idx;
   }
 
-  // EN İYİ VE EN GÜÇLÜ SİLAHI BULMA HİYERARŞİSİ (Vorteks -> Tesla -> Ray -> Saçma -> Füze -> Lazer -> Plazma)
-  getBestAvailableWeapon() {
-    for (let i = 6; i >= 1; i--) {
+  // KENDİNDEN SONRAKİ MEVCUT EN İYİ SİLAHI BULMA HİYERARŞİSİ
+  // (Önce seçili silahtan bir alt kademeye doğru mevcut en güçlü silaha bakar; yoksa üst kademelere, o da yoksa 0 Plazma'ya geçer)
+  getNextBestAvailableWeapon() {
+    // 1. Seçili silahtan geriye/aşağıya doğru mevcut en güçlü silaha bak (kendinden sonraki)
+    for (let i = this.weaponIndex - 1; i >= 1; i--) {
       if (this.ammo[i] > 0) return i;
     }
-    return 0; // Hiçbiri yoksa Standart Sonsuz Plazma
+    // 2. Alt kademelerde cephane yoksa, envanterdeki mevcut en yüksek güçlü silaha bak
+    for (let i = 6; i > this.weaponIndex; i--) {
+      if (this.ammo[i] > 0) return i;
+    }
+    // 3. Hiçbir özel silahın mermisi kalmadıysa sınırsız standart plazmaya (1. silah) geç
+    return 0;
+  }
+
+  switchToNextBestWeapon() {
+    this.weaponIndex = this.getNextBestAvailableWeapon();
+    return this.weaponIndex;
+  }
+
+  getBestAvailableWeapon() {
+    return this.getNextBestAvailableWeapon();
   }
 
   switchToBestWeapon() {
-    this.weaponIndex = this.getBestAvailableWeapon();
-    return this.weaponIndex;
+    return this.switchToNextBestWeapon();
   }
 
   toggleMine(dir = 1) {
@@ -2133,9 +2148,9 @@ class Player {
       if (this.fireTimer < delay) return;
     }
 
-    // Seçili silahın cephanesi yoksa hemen en iyi silaha geç
+    // Seçili silahın cephanesi yoksa hemen kendinden sonraki en iyi silaha geç
     if (this.weaponIndex !== 0 && this.ammo[this.weaponIndex] <= 0) {
-      this.switchToBestWeapon();
+      this.switchToNextBestWeapon();
     }
 
     this.fireTimer = 0;
@@ -2222,9 +2237,9 @@ class Player {
         break;
     }
 
-    // KURAL: Eğer mevcut silahın cephanesi bu atışla bittiyse otomatik olarak alt kademedeki en iyi silaha geç!
+    // KURAL: Eğer mevcut silahın cephanesi bu atışla bittiyse otomatik olarak kendinden sonraki en iyi silaha geç!
     if (this.weaponIndex !== 0 && this.ammo[this.weaponIndex] <= 0) {
-      this.switchToBestWeapon();
+      this.switchToNextBestWeapon();
     }
 
     particles.push(new Particle(
@@ -2768,7 +2783,7 @@ class Game {
           const prevWep = this.player.weaponIndex;
           this.player.tryShoot(0.2, this.bullets, this.particles, this.audio, true, this.getWeaponTier());
           if (prevWep !== this.player.weaponIndex) {
-            this.updateWeaponSlots();
+            this.onWeaponChanged(prevWep);
           }
         }
       } else if (e.button === 2) { // Sağ Tık Alan Mayını Bırak
@@ -2903,7 +2918,7 @@ class Game {
           const prevWep = this.player.weaponIndex;
           this.player.tryShoot(0.2, this.bullets, this.particles, this.audio, true, this.getWeaponTier());
           if (prevWep !== this.player.weaponIndex) {
-            this.updateWeaponSlots();
+            this.onWeaponChanged(prevWep);
           }
         }
       });
@@ -3124,6 +3139,21 @@ class Game {
         slot.classList.remove('active');
       }
     });
+  }
+
+  onWeaponChanged(prevWep) {
+    if (!this.player || prevWep === this.player.weaponIndex) return;
+    this.updateWeaponSlots();
+    this.updateHUD();
+    const tier = this.getWeaponTier();
+    const names = [
+      ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'],
+      ['GATLING', 'DÖRTLÜ LAZER', 'İKİZ FÜZE', 'PENTAGON', 'HİPER RAY', 'İYON YILDIRIM', 'TEKİLLİK'],
+      ['VULCAN', 'FOTON LAZER', 'KUANTUM FÜZE', 'NOVA SAÇMA', 'ANTİ-MADDE', 'ŞİMŞEK AĞI', 'KUANTUM ÇÖKÜŞ'],
+      ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'NEBULA IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK']
+    ][tier - 1] || ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'];
+    const newName = names[this.player.weaponIndex] || 'YENİ SİLAH';
+    this.showBanner('MÜHİMMAT TÜKENDİ!', `Sonraki silaha geçildi: ${newName}`);
   }
 
   showBanner(title, desc) {
@@ -3802,7 +3832,7 @@ class Game {
       const prevWep = this.player.weaponIndex;
       this.player.tryShoot(dt, this.bullets, this.particles, this.audio, false, this.getWeaponTier());
       if (prevWep !== this.player.weaponIndex) {
-        this.updateWeaponSlots();
+        this.onWeaponChanged(prevWep);
       }
     }
 
@@ -4063,17 +4093,26 @@ class Game {
           const ammoBoosts = [0, 90, 20, 60, 12, 45, 8];
           this.player.ammo[pk.typeIndex] += ammoBoosts[pk.typeIndex] || 25;
 
-          // KURAL: Her zaman en iyi silah elde kalır.
-          // Mevcut silah bitmişse veya toplanan silah mevcut silahtan daha güçlüyse o silaha geçilir;
-          // aksi takdirde güçlü silah bozulmaz, cephane envantere yüklenir!
-          if (this.player.ammo[this.player.weaponIndex] <= 0 || pk.typeIndex > this.player.weaponIndex) {
+          // KURAL: Oyuncunun seçtiği silah YENİ SİLAH ALINCA KESİNLİKLE DEĞİŞMEZ!
+          // Toplanan cephane doğrudan envantere aktarılır.
+          // Yalnızca mevcut seçili özel silahın mermisi 0 ise yeni silaha geçer.
+          if (this.player.weaponIndex !== 0 && this.player.ammo[this.player.weaponIndex] <= 0) {
             this.player.setWeaponIndex(pk.typeIndex);
-            this.showBanner(`${pk.name} KUŞANILDI!`, 'Daha güçlü silah devrede.');
+            this.showBanner(`${pk.name} KUŞANILDI!`, 'Tükenen mühimmat yerine yeni silah devreye girdi.');
           } else {
-            this.showBanner(`+${ammoBoosts[pk.typeIndex]} ${pk.name} CEPHANESİ!`, `Mevcut Silah Korundu (${this.player.ammo[this.player.weaponIndex]} mermi)`);
+            const tier = this.getWeaponTier();
+            const names = [
+              ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'],
+              ['GATLING', 'DÖRTLÜ LAZER', 'İKİZ FÜZE', 'PENTAGON', 'HİPER RAY', 'İYON YILDIRIM', 'TEKİLLİK'],
+              ['VULCAN', 'FOTON LAZER', 'KUANTUM FÜZE', 'NOVA SAÇMA', 'ANTİ-MADDE', 'ŞİMŞEK AĞI', 'KUANTUM ÇÖKÜŞ'],
+              ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'NEBULA IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK']
+            ][tier - 1] || ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'];
+            const activeName = names[this.player.weaponIndex] || 'SEÇİLİ SİLAH';
+            this.showBanner(`+${ammoBoosts[pk.typeIndex]} ${pk.name} CEPHANESİ!`, `Seçili Silah Korundu: ${activeName}`);
           }
 
           this.updateWeaponSlots();
+          this.updateHUD();
           this.audio.playPickup(false);
           this.createExplosion(pk.x, pk.y, pk.color, 20);
         }

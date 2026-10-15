@@ -33,9 +33,10 @@ Seviye atlamak için yalnızca düşman vurmak yeterli değildir:
 * Düşman tehdidi yoktur; 20 saniye içinde haritaya saçılmış onlarca silah cephanesi ve can kiti toplanır.
 * Süre bittiğinde toplanan tüm ganimetler korunarak bir sonraki seviyeye aktarılır.
 
-### 5. ⚡ Katı Silah Hiyerarşisi (Best Weapon Retention)
-* Toplanan cephaneler mevcut silahı bozmaz.
-* **Kural:** Oyuncu her zaman envanterindeki **en güçlü silahı** elinde tutar. En güçlü silahın mermisi tamamen bitene kadar korunur; mermisi bittiğinde otomatik olarak bir alt kademe silaha geçer.
+### 5. ⚡ Seçili Silah Korunumu & Akıllı Sıralı Geçiş (Weapon Retention & Smart Hierarchy)
+* **Seçili Silah Dokunulmazlığı:** Yeni bir silah veya cephane kapsülü toplandığında oyuncunun aktif olarak seçtiği silah **KESİNLİKLE DEĞİŞMEZ**. Toplanan tüm cephaneler doğrudan envantere eklenir.
+* **Akıllı Sıralı Geçiş:** Oyuncunun elindeki seçili silahın mermisi tükendiğinde, sistem otomatik olarak **kendinden sonraki mevcut en iyi silaha** (alt kademedeki silaha) geçer. Tüm özel cephaneler bittiğinde sınırsız Standart Plazma'ya döner.
+* **Serbest Taktiksel Seçim:** Oyuncu dilediği an 1-7 kısayolları, fare tekerleği veya HUD paneline tıklayarak istediği silaha geçiş yapabilir.
 * Sabit ikmal kutuları uzayda kararlı durur (oyuncuyu kovalamaz veya yer değiştirmez).
 
 ### 6. 📱 Tam Mobil ve Tablet Uyumluluğu
