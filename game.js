@@ -58,14 +58,18 @@ class Shockwave {
     if (this.life <= 0) return;
     ctx.save();
     const alpha = Math.max(0, this.life / this.maxLife);
-    ctx.globalAlpha = alpha;
-    ctx.shadowBlur = 24;
-    ctx.shadowColor = this.color;
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 4 * alpha + 1.2;
 
+    // Dış Neon Halkası
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = (4 * alpha + 1.2) * 2;
+    ctx.globalAlpha = alpha * 0.35;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // İç Keskin Çizgi
+    ctx.lineWidth = 4 * alpha + 1.2;
+    ctx.globalAlpha = alpha;
     ctx.stroke();
 
     ctx.fillStyle = this.color;
@@ -519,13 +523,10 @@ class Particle {
   draw(ctx) {
     if (this.life <= 0) return;
     const alpha = Math.max(0, this.life / this.maxLife);
-    ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, Math.max(0.5, this.size * (this.isSmoke ? 1 : alpha)), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    const s = Math.max(1, this.size * (this.isSmoke ? 1 : alpha));
+    ctx.fillRect(this.x - s * 0.5, this.y - s * 0.5, s, s);
   }
 }
 
@@ -828,8 +829,6 @@ class MothershipGate {
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 3.5;
     ctx.fillStyle = 'rgba(6, 14, 34, 0.95)';
-    ctx.shadowBlur = 24;
-    ctx.shadowColor = '#00f0ff';
 
     // 6 Ağır Zırh Kanadı & İniş Hangar Işıkları
     for (let i = 0; i < 6; i++) {
@@ -906,8 +905,6 @@ class MothershipGate {
     ctx.font = 'bold 12px Orbitron, sans-serif';
     ctx.fillStyle = '#00f0ff';
     ctx.textAlign = 'center';
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = '#00f0ff';
     ctx.fillText('TAŞIYICI SAVAŞ GEMİSİ / WARP KAPISI', 0, 160);
     ctx.font = 'bold 10px Rajdhani, sans-serif';
     ctx.fillStyle = '#ffffff';
@@ -957,8 +954,6 @@ class SupplyPickup {
     const scale = 1 + Math.sin(this.pulse) * 0.14;
     ctx.scale(scale, scale);
 
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = this.color;
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.5;
     ctx.fillStyle = 'rgba(6, 14, 30, 0.92)';
@@ -978,7 +973,6 @@ class SupplyPickup {
     if (this.typeIndex === 7) {
       // HAK / CAN ONARIM KİTİ (+)
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = '#00ffaa';
       ctx.fillRect(-2.5, -8, 5, 16);
       ctx.fillRect(-8, -2.5, 16, 5);
     } else {
@@ -995,10 +989,8 @@ class SupplyPickup {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.font = 'bold 9px Orbitron, sans-serif';
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = this.color;
     ctx.textAlign = 'center';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
     ctx.fillText(this.name, 0, 28);
     ctx.restore();
   }
@@ -1047,10 +1039,8 @@ class QuantumCore {
     // 1. Dış Parıldayan Enerji Halesi & Yörünge Halkası
     ctx.save();
     ctx.rotate(this.rotation * 0.7);
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.65)';
-    ctx.lineWidth = 1.8;
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#00f0ff';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.75)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(0, 0, 24, 0, Math.PI * 2);
     ctx.stroke();
@@ -1070,8 +1060,6 @@ class QuantumCore {
     ctx.rotate(-this.rotation * 1.2);
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 2.2;
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#ffd700';
     ctx.beginPath();
     ctx.ellipse(0, 0, 18, 9, Math.PI / 4, 0, Math.PI * 2);
     ctx.stroke();
@@ -1080,8 +1068,6 @@ class QuantumCore {
     // 3. Merkez Kristal / Elmas (Kuantum Çekirdeği)
     ctx.save();
     ctx.rotate(this.rotation * 0.4);
-    ctx.shadowBlur = 25;
-    ctx.shadowColor = '#00ffff';
     const grad = ctx.createLinearGradient(-14, -14, 14, 14);
     grad.addColorStop(0, '#ffffff');
     grad.addColorStop(0.35, '#00ffff');
@@ -1119,8 +1105,6 @@ class QuantumCore {
     ctx.font = 'bold 9px Orbitron, sans-serif';
     ctx.fillStyle = '#ffd700';
     ctx.textAlign = 'center';
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = '#ffd700';
     ctx.fillText('KUANTUM ÇEKİRDEĞİ 💎', 0, 36);
     ctx.restore();
   }
@@ -1305,24 +1289,31 @@ class Asteroid {
       ctx.lineWidth = 2.5;
       ctx.stroke();
     } else {
-      const grad = ctx.createRadialGradient(-this.radius * 0.25, -this.radius * 0.25, 4, 0, 0, this.radius);
-      grad.addColorStop(0, '#475569');
-      grad.addColorStop(0.65, '#334155');
-      grad.addColorStop(1, '#1e293b');
-      ctx.fillStyle = grad;
+      if (!Asteroid.rockGrads) Asteroid.rockGrads = {};
+      if (!Asteroid.rockGrads[this.size]) {
+        const g = ctx.createRadialGradient(-this.radius * 0.25, -this.radius * 0.25, 4, 0, 0, this.radius);
+        g.addColorStop(0, '#475569');
+        g.addColorStop(0.65, '#334155');
+        g.addColorStop(1, '#1e293b');
+        Asteroid.rockGrads[this.size] = g;
+      }
+      ctx.fillStyle = Asteroid.rockGrads[this.size];
       ctx.fill();
 
       ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 2.2;
       ctx.stroke();
 
-      // Kraterler
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
-      ctx.lineWidth = 1.2;
-      for (const cr of this.craters) {
+      // Kraterler (Toplu Tek Geçişli Çizim)
+      if (this.craters && this.craters.length > 0) {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+        for (const cr of this.craters) {
+          ctx.moveTo(cr.x + cr.r, cr.y);
+          ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+        }
         ctx.fill();
         ctx.stroke();
       }
@@ -1529,8 +1520,6 @@ class Projectile {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = this.color;
     ctx.strokeStyle = this.color;
     ctx.lineWidth = this.type === 'RAILGUN' ? (6 + (this.tier - 1) * 3) : (this.type === 'RED_LASER' ? (4.5 + (this.tier - 1)) : 3.5);
     ctx.lineCap = 'round';
@@ -1639,8 +1628,6 @@ class ShadowInterceptor {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(28, 4, 22, 0.94)';
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.5;
@@ -1694,8 +1681,6 @@ class HeavyDreadnought {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(28, 16, 4, 0.95)';
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 3;
@@ -1801,8 +1786,6 @@ class CosmicLeviathan {
 
   draw(ctx) {
     ctx.save();
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = this.color;
 
     for (let i = this.segments.length - 1; i >= 0; i--) {
       const seg = this.segments[i];
@@ -1899,8 +1882,6 @@ class PlasmaMine {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.spin);
 
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(35, 5, 5, 0.92)';
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.5;
@@ -1969,8 +1950,6 @@ class SniperSloop {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = 'rgba(38, 5, 12, 0.96)';
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2.8;
@@ -2295,16 +2274,18 @@ class Player {
       this.vx += Math.cos(this.angle) * this.thrustPower * dt;
       this.vy += Math.sin(this.angle) * this.thrustPower * dt;
 
-      const backAngle = this.angle + Math.PI + (Math.random() - 0.5) * 0.4;
-      particles.push(new Particle(
-        this.x - Math.cos(this.angle) * 20,
-        this.y - Math.sin(this.angle) * 20,
-        Math.random() > 0.3 ? this.color : '#ffe600',
-        Math.random() * 3 + 2,
-        Math.random() * 120 + 60,
-        backAngle,
-        0.35
-      ));
+      if (Math.random() < 0.6) {
+        const backAngle = this.angle + Math.PI + (Math.random() - 0.5) * 0.4;
+        particles.push(new Particle(
+          this.x - Math.cos(this.angle) * 20,
+          this.y - Math.sin(this.angle) * 20,
+          Math.random() > 0.3 ? this.color : '#ffe600',
+          Math.random() * 3 + 2,
+          Math.random() * 120 + 60,
+          backAngle,
+          0.35
+        ));
+      }
     }
 
     this.vx *= Math.pow(this.friction, dt * 60);
@@ -2338,19 +2319,14 @@ class Player {
     // KALKAN HALKASI
     if (this.shield > 5) {
       ctx.save();
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = this.color;
       ctx.strokeStyle = this.color;
-      ctx.globalAlpha = 0.25 + (this.shield / this.maxShield) * 0.4;
-      ctx.lineWidth = 1.6;
+      ctx.globalAlpha = 0.25 + (this.shield / this.maxShield) * 0.45;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.arc(0, 0, 30, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
-
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = this.color;
 
     if (this.shipType === 'TITAN') {
       // --- GEMİ 2: TITAN (AĞIR ZIRHLI KRUVAZÖR) ---
@@ -2682,14 +2658,17 @@ class Game {
   }
 
   handleResize() {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     this.viewWidth = window.innerWidth;
     this.viewHeight = window.innerHeight;
 
-    this.canvas.width = this.viewWidth * dpr;
-    this.canvas.height = this.viewHeight * dpr;
+    this.canvas.width = Math.round(this.viewWidth * dpr);
+    this.canvas.height = Math.round(this.viewHeight * dpr);
     this.ctx.resetTransform?.();
     this.ctx.scale(dpr, dpr);
+
+    // Arka plan gradyanı önbelleğini sıfırla
+    this.cachedBgGrad = null;
 
     if (!this.player) {
       this.player = new Player(0, 0, this.selectedShip);
@@ -4153,19 +4132,28 @@ class Game {
       }
     }
 
-    // Partiküller
+    // Partiküller (Maksimum 180 adet ile sınırlandırılarak fps düşmesi önlenir)
+    if (this.particles.length > 180) {
+      this.particles.splice(0, this.particles.length - 180);
+    }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.update(dt);
       if (p.life <= 0) this.particles.splice(i, 1);
     }
 
-    this.updateHUD();
+    // HUD Güncellemesini saniyede ~20 kez ile sınırla (DOM reflow ve layout thrashing önlenir)
+    this.hudUpdateTimer = (this.hudUpdateTimer || 0) + dt;
+    if (this.hudUpdateTimer >= 0.05) {
+      this.hudUpdateTimer = 0;
+      this.updateHUD();
+    }
   }
 
   createExplosion(x, y, color, count = 16) {
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+    const actualCount = this.particles.length > 140 ? Math.floor(count * 0.5) : count;
+    for (let i = 0; i < actualCount; i++) {
+      const angle = (Math.PI * 2 * i) / actualCount + (Math.random() - 0.5) * 0.4;
       const speed = Math.random() * 220 + 60;
       this.particles.push(new Particle(
         x,
@@ -4277,7 +4265,11 @@ class Game {
     }
 
     if (this.dom.objectiveFill) {
-      this.dom.objectiveFill.style.width = `${objPct}%`;
+      const roundedObj = Math.round(objPct);
+      if (this._lastObjPct !== roundedObj) {
+        this._lastObjPct = roundedObj;
+        this.dom.objectiveFill.style.width = `${roundedObj}%`;
+      }
       if (objPct >= 100 || this.portal) {
         this.dom.objectiveFill.classList.add('ready');
       } else {
@@ -4286,12 +4278,28 @@ class Game {
     }
 
     const shieldPct = Math.max(0, (this.player.shield / this.player.maxShield) * 100);
-    if (this.dom.shieldFill) this.dom.shieldFill.style.width = `${shieldPct}%`;
-    if (this.dom.shieldText) this.dom.shieldText.textContent = `${Math.ceil(this.player.shield)} / ${this.player.maxShield}`;
+    const roundedShield = Math.round(shieldPct);
+    if (this.dom.shieldFill && this._lastShieldPct !== roundedShield) {
+      this._lastShieldPct = roundedShield;
+      this.dom.shieldFill.style.width = `${roundedShield}%`;
+    }
+    const ceilShield = Math.ceil(this.player.shield);
+    if (this.dom.shieldText && this._lastCeilShield !== ceilShield) {
+      this._lastCeilShield = ceilShield;
+      this.dom.shieldText.textContent = `${ceilShield} / ${this.player.maxShield}`;
+    }
 
     const hpPct = Math.max(0, (this.player.hp / this.player.maxHp) * 100);
-    if (this.dom.hpFill) this.dom.hpFill.style.width = `${hpPct}%`;
-    if (this.dom.hpText) this.dom.hpText.textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+    const roundedHp = Math.round(hpPct);
+    if (this.dom.hpFill && this._lastHpPct !== roundedHp) {
+      this._lastHpPct = roundedHp;
+      this.dom.hpFill.style.width = `${roundedHp}%`;
+    }
+    const ceilHp = Math.ceil(this.player.hp);
+    if (this.dom.hpText && this._lastCeilHp !== ceilHp) {
+      this._lastCeilHp = ceilHp;
+      this.dom.hpText.textContent = `${ceilHp} / ${this.player.maxHp}`;
+    }
 
     const mineNames = [
       'TERMONÜKLEER KIYAMET',
@@ -4398,8 +4406,6 @@ class Game {
       if (rx >= 0 && rx <= w && ry >= 0 && ry <= h) {
         ctx.save();
         ctx.fillStyle = '#ffd700';
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = '#ffd700';
         ctx.beginPath();
         ctx.moveTo(rx, ry - 4);
         ctx.lineTo(rx + 3.5, ry);
@@ -4426,8 +4432,6 @@ class Game {
 
       ctx.save();
       ctx.fillStyle = '#00f0ff';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#00f0ff';
       ctx.beginPath();
       ctx.arc(clampedRx, clampedRy, 5, 0, Math.PI * 2);
       ctx.fill();
@@ -4455,25 +4459,44 @@ class Game {
     ctx.stroke();
   }
 
-  // PARALLAKS NEBULA BULUTLARI (5 DİNAMİK BÖLGE TEMASINA GÖRE)
+  // Önbelleğe alınmış yumuşak nebula bulut sprite'ı (Sıfır kare başı GPU tahsisi)
+  getNebulaSprite(color) {
+    if (!this.nebulaSprites) this.nebulaSprites = {};
+    if (this.nebulaSprites[color]) return this.nebulaSprites[color];
+
+    const size = 512;
+    const can = document.createElement('canvas');
+    can.width = size;
+    can.height = size;
+    const cctx = can.getContext('2d');
+    const grad = cctx.createRadialGradient(size / 2, size / 2, 20, size / 2, size / 2, size / 2);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    cctx.fillStyle = grad;
+    cctx.beginPath();
+    cctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    cctx.fill();
+
+    this.nebulaSprites[color] = can;
+    return can;
+  }
+
+  // PARALLAKS NEBULA BULUTLARI (5 DİNAMİK BÖLGE TEMASINA GÖRE - ULTRA AKICI GPU SPRITE ÇİZİMİ)
   drawNebulaClouds(theme) {
     this.ctx.save();
     const px = -this.camera.x * 0.16;
     const py = -this.camera.y * 0.16;
     this.ctx.translate(px, py);
 
+    const spr1 = this.getNebulaSprite(theme.nebulaColor1);
+    const spr2 = this.getNebulaSprite(theme.nebulaColor2);
+
     for (let i = 0; i < this.nebulaSeeds.length; i++) {
       const seed = this.nebulaSeeds[i];
       const gx = seed.x + this.viewWidth / 2;
       const gy = seed.y + this.viewHeight / 2;
-      const grad = this.ctx.createRadialGradient(gx, gy, 40, gx, gy, seed.r);
-      const col = (i % 2 === 0) ? theme.nebulaColor1 : theme.nebulaColor2;
-      grad.addColorStop(0, col);
-      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      this.ctx.fillStyle = grad;
-      this.ctx.beginPath();
-      this.ctx.arc(gx, gy, seed.r, 0, Math.PI * 2);
-      this.ctx.fill();
+      const spr = (i % 2 === 0) ? spr1 : spr2;
+      this.ctx.drawImage(spr, gx - seed.r, gy - seed.r, seed.r * 2, seed.r * 2);
     }
     this.ctx.restore();
   }
@@ -4507,8 +4530,6 @@ class Game {
         ctx.translate(clampX, clampY);
         ctx.rotate(angle);
 
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = '#00f0ff';
         ctx.fillStyle = '#00f0ff';
         ctx.beginPath();
         ctx.moveTo(24, 0);
@@ -4522,8 +4543,6 @@ class Game {
         ctx.font = 'bold 12px Orbitron, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#00f0ff';
         ctx.fillText(`${Math.round(dist)}m`, 0, -22);
         ctx.font = 'bold 9px Rajdhani, sans-serif';
         ctx.fillStyle = '#00ffaa';
@@ -4532,8 +4551,6 @@ class Game {
         ctx.font = 'bold 12px Orbitron, sans-serif';
         ctx.fillStyle = '#00ffaa';
         ctx.textAlign = 'center';
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#00ffaa';
         ctx.fillText(`▼ DOCKING HEDEFİ (${Math.round(dist)}m)`, screenX, screenY - 140);
       }
       ctx.restore();
@@ -4577,8 +4594,6 @@ class Game {
         ctx.rotate(angle);
 
         // Altın / Kuantum Pusula Oku
-        ctx.shadowBlur = 16;
-        ctx.shadowColor = '#ffd700';
         ctx.fillStyle = '#ffd700';
         ctx.beginPath();
         ctx.moveTo(22, 0);
@@ -4592,8 +4607,6 @@ class Game {
         ctx.font = 'bold 11px Orbitron, sans-serif';
         ctx.fillStyle = '#ffd700';
         ctx.textAlign = 'center';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ffd700';
         ctx.fillText(`${Math.round(dist)}m`, 0, -20);
         ctx.font = 'bold 9px Rajdhani, sans-serif';
         ctx.fillStyle = '#00f0ff';
@@ -4602,8 +4615,6 @@ class Game {
         ctx.font = 'bold 11px Orbitron, sans-serif';
         ctx.fillStyle = '#ffd700';
         ctx.textAlign = 'center';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ffd700';
         ctx.fillText(`▼ KUANTUM ÇEKİRDEĞİ (${Math.round(dist)}m)`, screenX, screenY - 45);
       }
       ctx.restore();
@@ -4634,8 +4645,7 @@ class Game {
       const headY = cy + ny;
 
       ctx.strokeStyle = st.color;
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = st.color;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(tailX, tailY);
       ctx.lineTo(headX, headY);
@@ -4654,15 +4664,20 @@ class Game {
   draw() {
     const theme = this.getSectorTheme(this.currentLevel);
 
-    // 1. Dinamik Kozmik Arka Plan Gradyanı
-    const bgGrad = this.ctx.createRadialGradient(
-      this.viewWidth / 2, this.viewHeight / 2, 60,
-      this.viewWidth / 2, this.viewHeight / 2, Math.max(this.viewWidth, this.viewHeight) * 0.85
-    );
-    bgGrad.addColorStop(0, theme.bgGradient[1]);
-    bgGrad.addColorStop(0.6, theme.bgGradient[0]);
-    bgGrad.addColorStop(1, theme.bgGradient[2]);
-    this.ctx.fillStyle = bgGrad;
+    // 1. Dinamik Kozmik Arka Plan Gradyanı (Önbellekli - Sıfır Kare Başı Allocation)
+    if (!this.cachedBgGrad || this.cachedBgZone !== theme.zone || this.cachedBgW !== this.viewWidth || this.cachedBgH !== this.viewHeight) {
+      this.cachedBgGrad = this.ctx.createRadialGradient(
+        this.viewWidth / 2, this.viewHeight / 2, 60,
+        this.viewWidth / 2, this.viewHeight / 2, Math.max(this.viewWidth, this.viewHeight) * 0.85
+      );
+      this.cachedBgGrad.addColorStop(0, theme.bgGradient[1]);
+      this.cachedBgGrad.addColorStop(0.6, theme.bgGradient[0]);
+      this.cachedBgGrad.addColorStop(1, theme.bgGradient[2]);
+      this.cachedBgZone = theme.zone;
+      this.cachedBgW = this.viewWidth;
+      this.cachedBgH = this.viewHeight;
+    }
+    this.ctx.fillStyle = this.cachedBgGrad;
     this.ctx.fillRect(0, 0, this.viewWidth, this.viewHeight);
 
     // 2. Parallaks Nebula Gaz Bulutları
@@ -4756,8 +4771,10 @@ class Game {
     // Düşmanlar
     for (const e of this.enemies) e.draw(this.ctx);
 
-    // Partiküller
+    // Partiküller (Toplu Alpha & State Yönetimi)
+    this.ctx.save();
     for (const pt of this.particles) pt.draw(this.ctx);
+    this.ctx.restore();
 
     // Oyuncu Gemisi (Seçilen Hangar Modeli)
     if (this.player) this.player.draw(this.ctx, this.isThrusting);
@@ -4796,10 +4813,8 @@ class Game {
     ctx.arc(bx, by, r, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
     ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = '#00f0ff';
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
     ctx.stroke();
 
     // 4 Yön Çentiği
@@ -4839,7 +4854,8 @@ class Game {
     if (!this.isRunning) return;
 
     if (!this.isPaused && !this.isLevelPaused) {
-      const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+      const rawDt = this.lastTime ? (currentTime - this.lastTime) / 1000 : 0.016;
+      const dt = Math.min(Math.max(rawDt, 0.001), 0.033);
       this.update(dt);
     }
     this.draw();

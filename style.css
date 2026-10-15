@@ -8,7 +8,7 @@
   --neon-orange: #ff8800;
   --neon-red: #ff2a2a;
   --bg-dark: #020308;
-  --panel-bg: rgba(6, 10, 22, 0.88);
+  --panel-bg: rgba(6, 12, 24, 0.94);
   --panel-border: rgba(0, 240, 255, 0.35);
 }
 
@@ -85,7 +85,6 @@ html, body {
 .stat-badge {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px);
   padding: 5px 12px;
   border-radius: 8px;
   display: flex;
@@ -135,7 +134,6 @@ html, body {
 .objective-card {
   background: var(--panel-bg);
   border: 1px solid rgba(0, 240, 255, 0.4);
-  backdrop-filter: blur(12px);
   padding: 6px 14px;
   border-radius: 8px;
   display: flex;
@@ -246,9 +244,8 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(3, 6, 16, 0.9);
+  background: rgba(3, 6, 16, 0.95);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(10px);
   padding: 5px;
   border-radius: 10px;
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.18);
@@ -277,9 +274,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(4, 7, 18, 0.88);
+  background: rgba(4, 7, 18, 0.95);
   border: 1px solid rgba(0, 240, 255, 0.25);
-  backdrop-filter: blur(10px);
   padding: 8px;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -431,7 +427,6 @@ html, body {
   pointer-events: auto;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(8px);
   color: white;
   width: 40px;
   height: 40px;
@@ -470,7 +465,6 @@ html, body {
 .bar-container {
   background: var(--panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
   padding: 6px 12px;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
