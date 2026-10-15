@@ -363,7 +363,7 @@ html, body {
 .weapon-slot[data-index="6"].active .slot-key { background: #9d00ff; color: white; }
 .weapon-slot[data-index="6"].active .slot-ammo { color: #d070ff; text-shadow: 0 0 8px #d070ff; }
 
-/* Sağ Tık Mayın Durum Paneli (2 Çeşit) */
+/* Sağ Tık Mayın Durum Paneli (5 Çeşit) */
 .mine-panel {
   margin-top: 6px;
   background: rgba(255, 136, 0, 0.08);
@@ -404,12 +404,26 @@ html, body {
   text-shadow: 0 0 6px var(--neon-orange);
 }
 
+.mine-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mine-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
 .mine-name {
   font-family: 'Orbitron', monospace;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #ffe600;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Ses & Müzik Butonları */

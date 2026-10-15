@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>NEBULA SPACE - 40 Level Space Campaign</title>
-  <link rel="stylesheet" href="style.css?v=2.1.0">
+  <link rel="stylesheet" href="style.css?v=2.2.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -115,13 +115,16 @@
           <span id="ammo-6" class="slot-ammo">14</span>
         </div>
 
-        <!-- Sağ Tık 2 Çeşit Mayın Durum Paneli -->
-        <div id="mine-panel" class="mine-panel" title="[SAĞ TIK]: Mayın Bırak | [Q/E]: Mayın Değiştir">
+        <!-- Sağ Tık 5 Çeşit Taktiksel Mayın Durum Paneli -->
+        <div id="mine-panel" class="mine-panel" title="[SAĞ TIK]: Mayın Bırak | [Q/E / Tıkla]: Mayın Değiştir (5 Çeşit)">
           <div class="mine-header">
             <span class="mine-tag">SAĞ TIK: MAYIN [Q/E]</span>
-            <span id="mine-ammo" class="mine-ammo">x8</span>
+            <span id="mine-ammo" class="mine-ammo">x10</span>
           </div>
-          <span id="mine-name" class="mine-name">TERMONÜKLEER MAYIN</span>
+          <div class="mine-body">
+            <span id="mine-icon" class="mine-icon">☢️</span>
+            <span id="mine-name" class="mine-name">TERMONÜKLEER KIYAMET</span>
+          </div>
         </div>
       </div>
 
@@ -196,11 +199,15 @@
               </div>
               <div class="instruction-item">
                 <span class="icon">💣</span>
-                <span><strong>Alan Mayınları:</strong> <strong>Sağ Tık</strong> ile bırak! <strong>Q / E</strong> ile Termonükleer veya EMP seç.</span>
+                <span><strong>5 Ölümcül Mayın:</strong> <strong>Sağ Tık</strong> ile bırak! <strong>Q / E</strong> (veya panele tıkla) ile 5 mayın seç: ☢️ Nükleer, ⚡ EMP, 🌌 Vorteks, 💥 Şarapnel, 🔥 Plazma.</span>
+              </div>
+              <div class="instruction-item">
+                <span class="icon">🪨</span>
+                <span><strong>Swarm Uzay Taşları:</strong> Dikkat! Taşlara çarparsan can/hak kaybedersin ve seker! Mermi veya mayınla parçala (küçük taşlar ikmal bırakabilir).</span>
               </div>
               <div class="instruction-item">
                 <span class="icon">❤️</span>
-                <span><strong>Hak & Can:</strong> 3 Can ile başlarsın. Yeşil <strong>HAK / CAN KİTİ</strong> ekstra can (+1 Hak) kazandırır.</span>
+                <span><strong>Hak & Can:</strong> 3 Can ile başlarsın. Yansan bile aynı seviyeden devam edersin! Yeşil <strong>HAK / CAN KİTİ</strong> ekstra can (+1 Hak) kazandırır.</span>
               </div>
               <div class="instruction-item">
                 <span class="icon">⚡</span>
@@ -377,6 +384,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.1.0"></script>
+  <script src="game.js?v=2.2.0"></script>
 </body>
 </html>

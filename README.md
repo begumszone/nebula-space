@@ -68,11 +68,37 @@ Seviye ilerledikçe silah teknolojileri Tier 1'den Tier 4 (Kuantum/Nebula) seviy
 
 ---
 
-## 💣 Taktiksel Alan Mayınları (Sağ Tık)
+## 💣 5 Ölümcül ve Gelişmiş Taktiksel Alan Mayını (Sağ Tık)
 
-* **Termonükleer Mayın:** 280m alanda 750 hasar veren devasa nükleer patlama.
-* **EMP Şok Mayını:** 350m alanda elektrik şoku dalgası yayarak düşmanları sersemletir ve yavaşlatır.
-* `Q` / `E` tuşları ile aralarında geçiş yapılabilir.
+Oyuncu başlangıçta 10 mayın ile başlar (en fazla 25) ve `Q` / `E` tuşları veya HUD paneline tıklayarak 5 mayın tipi arasında anında geçiş yapabilir:
+
+1. ☢️ **TERMONÜKLEER KIYAMET:** 380m alanda 1500 devasa nükleer hasar ve çifte şok dalgası.
+2. ⚡ **EMP ŞOK & FELÇ:** 440m alanda 900 hasar verir ve düşman motorlarını dondurarak felç eder.
+3. 🌌 **KUANTUM VORTEKS (KARADELİK):** 360m alanda 1800 hasar verir; 4.2 saniye süresince yerçekimsel tekillik yaratarak tüm düşmanları ve uzay taşlarını merkezine çeker.
+4. 💥 **KÜMELİ ŞARAPNEL:** 300m alanda 750 patlama hasarı verir ve 360° açıyla 18 adet yüksek hızlı, delici şarapnel roketi püskürtür.
+5. 🔥 **CEHENNEM PLAZMA:** 320m alanda 500 ani hasar verir ve 5.5 saniye boyunca 380 DPS hasar veren kaynayan bir plazma/asit yangın alanı bırakır.
+
+---
+
+## 🪨 Orijinal Swarm Uzay Taşları & Asteroid Fiziği
+
+Orijinal *Swarm* arcade klasiğindeki tehlikeli uzay taşları geri döndü:
+* **Prosedürel Taş Tasarımı:** Her taş kendine has kraterlere, girintili çıkıntılı geometrik şekle ve doğal sürüklenme/dönme hızına sahiptir.
+* **3 Kademeli Parçalanma Fiziği:**
+  * 🪨 **Büyük Taş (Large):** Vurulduğunda 2 Orta Taşa bölünür.
+  * 🪨 **Orta Taş (Medium):** Vurulduğunda 2 Küçük Taşa bölünür.
+  * 🪨 **Küçük Taş (Small):** Parçalandığında taş tozuna dönüşür ve **%35 ihtimalle İkmal Kapsülü (Silah veya Can Kiti)** düşürür!
+* **Fiziksel Çarpışma ve Geri Tepme (Recoil):** Taşa çarptığınızda geminiz fiziksel itkiyle geri seker, kalkanınız ve gövdeniz ciddi kinetik hasar alır. Eğer gövdeniz tükenirse bir canınız/hakkınız gider!
+* **Taktik Radar Desteği:** Taşlar seviye radarında gri/taş rengi karelerle işaretlenir.
+
+---
+
+## ⚡ 60 FPS Sıfır Takılma (Zero Lag) Optimizasyonu
+
+* **Partikül Gaussian Blur Filtrelerinin Kaldırılması:** Her karede yüzlerce partikül için çalıştırılan ağır yazılımsal `shadowBlur` kaldırılmış, saf renk ve alfa katmanları kullanılmıştır.
+* **Toplu Çizim (Batch Rendering):** 1200+ yıldızın tek tek `beginPath()` ve `fill()` ile çizilmesi yerine tüm katman tek bir `beginPath()` ve tek bir `fill()` çağrısıyla çizilerek GPU çağrıları %95 azaltılmıştır.
+* **Izgara Çizim Optimizasyonu:** Koordinat ızgara çizgileri tek bir `beginPath()` ve `stroke()` çağrısında birleştirilmiştir.
+* **Senkronize Radar Çizimi:** Radar çizimi fizik döngüsünden ayrılıp ekran yenileme hızına (requestAnimationFrame) kilitlenmiştir.
 
 ---
 
@@ -85,7 +111,7 @@ Seviye ilerledikçe silah teknolojileri Tier 1'den Tier 4 (Kuantum/Nebula) seviy
 | **İtici (Motor)** | `SPACE` veya `W` / `↑` |
 | **Seri Ateş** | Farenin Sol Tıkı |
 | **Alan Mayını Bırak** | Farenin Sağ Tıkı |
-| **Mayın Türü Değiştir** | `Q` / `E` Tuşları |
+| **Mayın Türü Değiştir (5 Çeşit)** | `Q` / `E` Tuşları veya Mayın Paneline Tıklama |
 | **Silah Seçimi** | `1` - `7` Tuşları veya Fare Tekerleği |
 | **Oyunu Duraklat** | `ESC` Tuşu veya `⏸️` Butonu |
 | **Seviyeyi Başlat / Atla** | `ENTER` Tuşu |
@@ -96,7 +122,7 @@ Seviye ilerledikçe silah teknolojileri Tier 1'den Tier 4 (Kuantum/Nebula) seviy
 | **Gemi Yönü & İtiş** | Sol Ekran Sanal Joystick |
 | **Ateş Etme** | Sağ Ekran `ATEŞ` Butonu |
 | **Hızlı İtici** | Sağ Ekran `İTİCİ` Butonu |
-| **Mayın Bırakma** | Sağ Ekran `MAYIN` Butonu |
+| **Mayın Bırakma / Değiştirme** | Sağ Ekran `MAYIN` Butonu (Dokun = Bırak, Basılı Tut = Değiştir) |
 | **Silah Değiştirme** | Sağ Ekran `SİLAH` Butonu |
 
 ---

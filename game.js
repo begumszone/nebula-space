@@ -328,6 +328,76 @@ class AudioEngine {
     } catch (e) {}
   }
 
+  playAsteroidHit() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(35, now + 0.14);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now); osc.stop(now + 0.14);
+    } catch (e) {}
+  }
+
+  playAsteroidBreak() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      [85, 60, 40].forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const st = now + idx * 0.04;
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, st);
+        osc.frequency.exponentialRampToValueAtTime(20, st + 0.2);
+        gain.gain.setValueAtTime(0.14, st);
+        gain.gain.exponentialRampToValueAtTime(0.001, st + 0.2);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(st); osc.stop(st + 0.2);
+      });
+    } catch (e) {}
+  }
+
+  playClusterBurst() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      for (let i = 0; i < 4; i++) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const st = now + i * 0.025;
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(340 + i * 70, st);
+        osc.frequency.exponentialRampToValueAtTime(70, st + 0.12);
+        gain.gain.setValueAtTime(0.09, st);
+        gain.gain.exponentialRampToValueAtTime(0.001, st + 0.12);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(st); osc.stop(st + 0.12);
+      }
+    } catch (e) {}
+  }
+
+  playPlasmaFire() {
+    if (!this.sfxEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now); osc.stop(now + 0.35);
+    } catch (e) {}
+  }
+
   playLevelComplete() {
     if (!this.sfxEnabled || !this.ctx) return;
     try {
@@ -448,11 +518,9 @@ class Particle {
 
   draw(ctx) {
     if (this.life <= 0) return;
-    ctx.save();
     const alpha = Math.max(0, this.life / this.maxLife);
+    ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.shadowBlur = this.isSmoke ? 2 : 8;
-    ctx.shadowColor = this.color;
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, Math.max(0.5, this.size * (this.isSmoke ? 1 : alpha)), 0, Math.PI * 2);
@@ -461,34 +529,72 @@ class Particle {
   }
 }
 
-// --- 4. 2 ÇEŞİT ALAN ETKİLİ MAYIN (SAĞ TIK) ---
+// --- 4. 5 GELİŞMİŞ VE ÖLÜMCÜL TAKTİKSEL ALAN MAYINI (SAĞ TIK) ---
 class DeployableMine {
-  constructor(x, y, type) {
+  constructor(x, y, type = 0) {
     this.x = x;
     this.y = y;
-    this.type = type; // 0: TERMONÜKLEER, 1: EMP ŞOK
-    this.armTimer = 0.22;
+    this.type = type; // 0: Termonükleer, 1: EMP Şok, 2: Kuantum Vorteks, 3: Kümeli Şarapnel, 4: Cehennem Plazma
+    this.armTimer = 0.20;
     this.life = 75;
-    this.radius = 18;
-    this.triggerRadius = 80;
+    this.radius = 20;
+    this.triggerRadius = 95;
     this.pulse = 0;
 
-    if (type === 0) {
-      this.name = 'TERMONÜKLEER MAYIN';
-      this.color = '#ff4400';
-      this.aoeRadius = 280;
-      this.damage = 750;
-    } else {
-      this.name = 'EMP ŞOK MAYINI';
-      this.color = '#00d2ff';
-      this.aoeRadius = 350;
-      this.damage = 480;
+    switch (type) {
+      case 0: // TERMONÜKLEER KIYAMET
+        this.name = 'TERMONÜKLEER KIYAMET';
+        this.shortName = 'NÜKLEER';
+        this.icon = '☢️';
+        this.color = '#ff3300';
+        this.aoeRadius = 380;
+        this.damage = 1500;
+        break;
+      case 1: // EMP ŞOK & FELÇ
+        this.name = 'EMP ŞOK & FELÇ';
+        this.shortName = 'EMP ŞOK';
+        this.icon = '⚡';
+        this.color = '#00d2ff';
+        this.aoeRadius = 440;
+        this.damage = 900;
+        break;
+      case 2: // KUANTUM VORTEKS / KARADELİK
+        this.name = 'KUANTUM VORTEKS';
+        this.shortName = 'VORTEKS';
+        this.icon = '🌌';
+        this.color = '#9d00ff';
+        this.aoeRadius = 360;
+        this.damage = 1800;
+        break;
+      case 3: // KÜMELİ ŞARAPNEL TOPU
+        this.name = 'KÜMELİ ŞARAPNEL';
+        this.shortName = 'ŞARAPNEL';
+        this.icon = '💥';
+        this.color = '#ffaa00';
+        this.aoeRadius = 300;
+        this.damage = 750;
+        break;
+      case 4: // CEHENNEM PLAZMA ASİDİ
+        this.name = 'CEHENNEM PLAZMA';
+        this.shortName = 'PLAZMA YANGINI';
+        this.icon = '🔥';
+        this.color = '#00ff88';
+        this.aoeRadius = 320;
+        this.damage = 500;
+        break;
+      default:
+        this.name = 'TERMONÜKLEER MAYIN';
+        this.shortName = 'NÜKLEER';
+        this.icon = '☢️';
+        this.color = '#ff3300';
+        this.aoeRadius = 380;
+        this.damage = 1500;
     }
   }
 
   update(dt) {
     this.life -= dt;
-    this.pulse += dt * 6;
+    this.pulse += dt * 6.5;
     if (this.armTimer > 0) this.armTimer -= dt;
   }
 
@@ -503,37 +609,173 @@ class DeployableMine {
     const armed = this.isArmed();
     const blink = Math.sin(this.pulse) > 0;
 
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = this.color;
-    ctx.fillStyle = 'rgba(14, 18, 34, 0.95)';
+    // Dış koruma halkası
+    ctx.fillStyle = 'rgba(12, 16, 30, 0.95)';
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = 2.8;
+    ctx.lineWidth = 2.5;
 
     ctx.beginPath();
-    ctx.arc(0, 0, 13, 0, Math.PI * 2);
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
+    // 4 Yön Bıçağı
     for (let i = 0; i < 4; i++) {
       const a = (i * Math.PI) / 2;
       ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * 11, Math.sin(a) * 11);
-      ctx.lineTo(Math.cos(a) * 20, Math.sin(a) * 20);
+      ctx.moveTo(Math.cos(a) * 12, Math.sin(a) * 12);
+      ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
       ctx.stroke();
     }
 
+    // Merkez Çekirdek
     ctx.fillStyle = armed ? (blink ? '#ffffff' : this.color) : '#555555';
     ctx.beginPath();
-    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
     ctx.fill();
 
+    // Algılama yarıçapı
     ctx.strokeStyle = this.color;
-    ctx.globalAlpha = 0.16;
-    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.18;
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.arc(0, 0, this.triggerRadius, 0, Math.PI * 2);
     ctx.stroke();
 
+    ctx.restore();
+  }
+}
+
+// --- 4.3 PERSİSTİNG CEHENNEM PLAZMA YANGIN ALANI (MAYIN 4 İÇİN) ---
+class PlasmaHazardZone {
+  constructor(x, y, radius, duration, damagePerSec) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.duration = duration;
+    this.maxDuration = duration;
+    this.damagePerSec = damagePerSec;
+    this.pulse = 0;
+  }
+
+  update(dt, enemies, asteroids, particles) {
+    this.duration -= dt;
+    this.pulse += dt * 6;
+
+    if (Math.random() < dt * 14 && particles) {
+      const a = Math.random() * Math.PI * 2;
+      const d = Math.random() * this.radius * 0.85;
+      particles.push(new Particle(
+        this.x + Math.cos(a) * d,
+        this.y + Math.sin(a) * d,
+        Math.random() < 0.5 ? '#00ff88' : '#ffe600',
+        Math.random() * 3 + 1.5,
+        Math.random() * 30 + 10,
+        a,
+        0.5
+      ));
+    }
+
+    const dmg = this.damagePerSec * dt;
+    for (const e of enemies) {
+      if (!e.dead && Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
+        e.hp -= dmg;
+      }
+    }
+    for (const ast of asteroids) {
+      if (!ast.dead && Math.hypot(ast.x - this.x, ast.y - this.y) < this.radius + ast.radius) {
+        ast.hp -= dmg * 1.5;
+      }
+    }
+  }
+
+  draw(ctx) {
+    if (this.duration <= 0) return;
+    ctx.save();
+    const alpha = Math.min(1, this.duration / this.maxDuration) * 0.35;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#00ff88';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#00ffaa';
+    ctx.lineWidth = 2.5;
+    ctx.globalAlpha = alpha * 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// --- 4.4 PERSİSTİNG VORTEKS / ÇEKİM TEKİLLİK ALANI (MAYIN 2 İÇİN) ---
+class SingularityZone {
+  constructor(x, y, radius, duration, damage) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.duration = duration;
+    this.damage = damage;
+    this.pullPower = 650;
+    this.rotation = 0;
+  }
+
+  update(dt, enemies, asteroids, particles) {
+    this.duration -= dt;
+    this.rotation += dt * 8;
+
+    for (const e of enemies) {
+      if (e.dead) continue;
+      const d = Math.hypot(this.x - e.x, this.y - e.y);
+      if (d < this.radius + 100 && d > 12) {
+        const pullAng = Math.atan2(this.y - e.y, this.x - e.x);
+        e.x += Math.cos(pullAng) * this.pullPower * dt;
+        e.y += Math.sin(pullAng) * this.pullPower * dt;
+      }
+    }
+    for (const ast of asteroids) {
+      if (ast.dead) continue;
+      const d = Math.hypot(this.x - ast.x, this.y - ast.y);
+      if (d < this.radius + 100 && d > 12) {
+        const pullAng = Math.atan2(this.y - ast.y, this.x - ast.x);
+        ast.x += Math.cos(pullAng) * (this.pullPower * 0.75) * dt;
+        ast.y += Math.sin(pullAng) * (this.pullPower * 0.75) * dt;
+      }
+    }
+
+    if (Math.random() < dt * 18 && particles) {
+      const a = Math.random() * Math.PI * 2;
+      const d = Math.random() * this.radius * 0.85;
+      particles.push(new Particle(
+        this.x + Math.cos(a) * d,
+        this.y + Math.sin(a) * d,
+        '#9d00ff',
+        2.5,
+        180,
+        Math.atan2(this.y - (this.y + Math.sin(a) * d), this.x - (this.x + Math.cos(a) * d)),
+        0.3
+      ));
+    }
+  }
+
+  draw(ctx) {
+    if (this.duration <= 0) return;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+
+    ctx.strokeStyle = '#9d00ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, Math.max(12, this.radius * 0.65), 0, Math.PI * 2);
+    ctx.stroke();
+
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(28, 22, 65, 0);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 }
@@ -884,6 +1126,230 @@ class QuantumCore {
   }
 }
 
+// --- 5.8 ORİJİNAL SWARM UZAY TAŞLARI / ASTEROİDLER (ASTEROID HAZARDS) ---
+class Asteroid {
+  constructor(x, y, size = 'LARGE', vx = null, vy = null) {
+    this.x = x;
+    this.y = y;
+    this.size = size; // 'LARGE', 'MEDIUM', 'SMALL'
+    this.dead = false;
+    this.hitTimer = 0;
+
+    switch (size) {
+      case 'LARGE':
+        this.radius = 48;
+        this.hp = 260;
+        this.maxHp = 260;
+        this.score = 150;
+        this.damageToPlayer = 45;
+        this.pushForce = 460;
+        break;
+      case 'MEDIUM':
+        this.radius = 28;
+        this.hp = 130;
+        this.maxHp = 130;
+        this.score = 80;
+        this.damageToPlayer = 30;
+        this.pushForce = 360;
+        break;
+      case 'SMALL':
+      default:
+        this.radius = 16;
+        this.hp = 55;
+        this.maxHp = 55;
+        this.score = 40;
+        this.damageToPlayer = 18;
+        this.pushForce = 260;
+        break;
+    }
+
+    // Doğal sürüklenme hızı ve rotasyon
+    const speed = size === 'LARGE' ? (Math.random() * 30 + 15) : (size === 'MEDIUM' ? (Math.random() * 50 + 25) : (Math.random() * 75 + 40));
+    const driftAng = Math.random() * Math.PI * 2;
+    this.vx = vx !== null ? vx : Math.cos(driftAng) * speed;
+    this.vy = vy !== null ? vy : Math.sin(driftAng) * speed;
+
+    this.rotation = Math.random() * Math.PI * 2;
+    this.spinSpeed = (Math.random() - 0.5) * (size === 'LARGE' ? 0.7 : 1.6);
+
+    // Prosedürel Doğal Taş Geometrisi (Girintili Çıkıntılı Çokgen)
+    this.points = [];
+    const numPoints = Math.floor(Math.random() * 4) + 9; // 9-12 köşe
+    for (let i = 0; i < numPoints; i++) {
+      const a = (i * Math.PI * 2) / numPoints;
+      const variance = 0.72 + Math.random() * 0.52; // 0.72 - 1.24
+      this.points.push({
+        x: Math.cos(a) * this.radius * variance,
+        y: Math.sin(a) * this.radius * variance
+      });
+    }
+
+    // Kraterler ve Çukurlar
+    this.craters = [];
+    const craterCount = size === 'LARGE' ? 4 : (size === 'MEDIUM' ? 2 : 1);
+    for (let i = 0; i < craterCount; i++) {
+      const ca = Math.random() * Math.PI * 2;
+      const cd = Math.random() * this.radius * 0.52;
+      const cr = Math.random() * (this.radius * 0.22) + 3.5;
+      this.craters.push({
+        x: Math.cos(ca) * cd,
+        y: Math.sin(ca) * cd,
+        r: cr
+      });
+    }
+  }
+
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.rotation += this.spinSpeed * dt;
+    if (this.hitTimer > 0) this.hitTimer -= dt;
+  }
+
+  takeDamage(dmg, game, hitX = null, hitY = null) {
+    if (this.dead) return;
+    this.hp -= dmg;
+    this.hitTimer = 0.08;
+
+    if (hitX !== null && hitY !== null && game.particles) {
+      for (let p = 0; p < 3; p++) {
+        const a = Math.random() * Math.PI * 2;
+        game.particles.push(new Particle(
+          hitX,
+          hitY,
+          Math.random() < 0.5 ? '#94a3b8' : '#64748b',
+          Math.random() * 2.5 + 1.2,
+          Math.random() * 90 + 30,
+          a,
+          0.3
+        ));
+      }
+    }
+
+    if (this.hp <= 0) {
+      this.destroy(game);
+    }
+  }
+
+  destroy(game) {
+    if (this.dead) return;
+    this.dead = true;
+
+    game.audio.playAsteroidBreak();
+    game.createExplosion(this.x, this.y, '#64748b', this.size === 'LARGE' ? 24 : (this.size === 'MEDIUM' ? 16 : 10));
+    game.createExplosion(this.x, this.y, '#94a3b8', this.size === 'LARGE' ? 14 : 8);
+
+    game.totalScore += this.score;
+    game.levelScore += this.score;
+
+    // Swarm Parçalanma Fiziği:
+    // Büyük Taş -> 2 Orta Taş
+    // Orta Taş -> 2 Küçük Taş
+    // Küçük Taş -> Taş tozu ve %35 İkmal Kapsülü (Silah / Can) düşürme şansı!
+    if (this.size === 'LARGE') {
+      for (let s = 0; s < 2; s++) {
+        const splitAng = Math.random() * Math.PI * 2;
+        const svx = this.vx * 0.5 + Math.cos(splitAng) * (70 + Math.random() * 40);
+        const svy = this.vy * 0.5 + Math.sin(splitAng) * (70 + Math.random() * 40);
+        game.asteroids.push(new Asteroid(
+          this.x + Math.cos(splitAng) * 22,
+          this.y + Math.sin(splitAng) * 22,
+          'MEDIUM',
+          svx,
+          svy
+        ));
+      }
+    } else if (this.size === 'MEDIUM') {
+      for (let s = 0; s < 2; s++) {
+        const splitAng = Math.random() * Math.PI * 2;
+        const svx = this.vx * 0.5 + Math.cos(splitAng) * (90 + Math.random() * 50);
+        const svy = this.vy * 0.5 + Math.sin(splitAng) * (90 + Math.random() * 50);
+        game.asteroids.push(new Asteroid(
+          this.x + Math.cos(splitAng) * 16,
+          this.y + Math.sin(splitAng) * 16,
+          'SMALL',
+          svx,
+          svy
+        ));
+      }
+    } else if (this.size === 'SMALL') {
+      if (Math.random() < 0.35) {
+        const tier = game.getWeaponTier();
+        const isRepair = Math.random() < 0.25;
+        const type = isRepair ? 7 : Math.floor(Math.random() * 6) + 1;
+        game.pickups.push(new SupplyPickup(this.x, this.y, type, false, tier));
+      }
+    }
+  }
+
+  draw(ctx) {
+    if (this.dead) return;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+
+    const isHit = this.hitTimer > 0;
+
+    // Gövde Çokgeni
+    ctx.beginPath();
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length; i++) {
+      ctx.lineTo(this.points[i].x, this.points[i].y);
+    }
+    ctx.closePath();
+
+    if (isHit) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#ffddaa';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    } else {
+      const grad = ctx.createRadialGradient(-this.radius * 0.25, -this.radius * 0.25, 4, 0, 0, this.radius);
+      grad.addColorStop(0, '#475569');
+      grad.addColorStop(0.65, '#334155');
+      grad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      // Kraterler
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+      ctx.lineWidth = 1.2;
+      for (const cr of this.craters) {
+        ctx.beginPath();
+        ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Taş Yüzey Işık Kenarı (Rim light)
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 0.88, -Math.PI * 0.75, -Math.PI * 0.15);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+
+    // Hasar aldığında minik can barı göster
+    if (this.hp < this.maxHp && this.hp > 0) {
+      const barW = this.radius * 1.5;
+      const barH = 3.5;
+      const pct = Math.max(0, this.hp / this.maxHp);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(-barW / 2, this.radius + 6, barW, barH);
+      ctx.fillStyle = pct > 0.5 ? '#10b981' : (pct > 0.25 ? '#f59e0b' : '#ef4444');
+      ctx.fillRect(-barW / 2, this.radius + 6, barW * pct, barH);
+    }
+
+    ctx.restore();
+  }
+}
+
 // --- 6. MERMİ SİSTEMİ (7 SİLAH, 4 TIER) ---
 class Projectile {
   constructor(x, y, angle, type, tier = 1, targetEnemy = null) {
@@ -964,6 +1430,16 @@ class Projectile {
         this.life = 1.5; // 1.5 sn sonra çöker
         this.aoeRadius = [190, 230, 270, 330][tier - 1] || 190;
         this.pullPower = 340 + (tier - 1) * 60;
+        break;
+
+      case 'SHRAPNEL':
+        this.speed = 1350;
+        this.damage = 110;
+        this.color = '#ffaa00';
+        this.length = 14;
+        this.radius = 4;
+        this.pierce = 2;
+        this.life = 0.75;
         break;
     }
 
@@ -1554,9 +2030,10 @@ class Player {
     this.ammo = [Infinity, 160, 28, 100, 20, 70, 14];
     this.fireTimer = 999;
 
-    // 2 Mayın Türü
+    // 5 Ölümcül Alan Mayını Türü
     this.mineIndex = 0;
-    this.mineAmmo = 8;
+    this.mineAmmo = 10;
+    this.maxMineAmmo = 25;
     this.mineCooldown = 0;
 
     this.roll = 0;
@@ -1634,8 +2111,8 @@ class Player {
     return this.weaponIndex;
   }
 
-  toggleMine() {
-    this.mineIndex = this.mineIndex === 0 ? 1 : 0;
+  toggleMine(dir = 1) {
+    this.mineIndex = (this.mineIndex + dir + 5) % 5;
     return this.mineIndex;
   }
 
@@ -2057,6 +2534,9 @@ class Game {
     this.particles = [];
     this.shockwaves = [];
     this.quantumCores = [];
+    this.asteroids = [];
+    this.plasmaHazards = [];
+    this.singularities = [];
 
     // Taşıyıcı Savaş Gemisi & Warp Portalı Sistemi
     this.portal = null;
@@ -2139,6 +2619,7 @@ class Game {
       hpText: document.getElementById('hp-text'),
       hpFill: document.getElementById('hp-fill'),
       mineName: document.getElementById('mine-name'),
+      mineIcon: document.getElementById('mine-icon'),
       mineAmmo: document.getElementById('mine-ammo'),
       minePanel: document.getElementById('mine-panel'),
       ammoSlots: [
@@ -2342,10 +2823,21 @@ class Game {
         this.isThrusting = true;
       }
 
-      if (e.code === 'KeyQ' || e.code === 'KeyE') {
+      if (e.code === 'KeyQ') {
         if (this.player) {
-          this.player.toggleMine();
+          this.player.toggleMine(-1);
           this.updateHUD();
+          const bannerNames = ['Termonükleer Kıyamet', 'EMP Şok & Felç', 'Kuantum Vorteks', 'Kümeli Şarapnel', 'Cehennem Plazma'];
+          this.showBanner('MAYIN DEĞİŞTİRİLDİ', bannerNames[this.player.mineIndex]);
+        }
+      }
+
+      if (e.code === 'KeyE') {
+        if (this.player) {
+          this.player.toggleMine(1);
+          this.updateHUD();
+          const bannerNames = ['Termonükleer Kıyamet', 'EMP Şok & Felç', 'Kuantum Vorteks', 'Kümeli Şarapnel', 'Cehennem Plazma'];
+          this.showBanner('MAYIN DEĞİŞTİRİLDİ', bannerNames[this.player.mineIndex]);
         }
       }
 
@@ -2376,8 +2868,10 @@ class Game {
     if (this.dom.minePanel) {
       this.dom.minePanel.addEventListener('click', () => {
         if (!this.player) return;
-        this.player.toggleMine();
+        this.player.toggleMine(1);
         this.updateHUD();
+        const bannerNames = ['Termonükleer Kıyamet', 'EMP Şok & Felç', 'Kuantum Vorteks', 'Kümeli Şarapnel', 'Cehennem Plazma'];
+        this.showBanner('MAYIN DEĞİŞTİRİLDİ', bannerNames[this.player.mineIndex]);
       });
     }
 
@@ -2436,9 +2930,10 @@ class Game {
         this.audio.init();
         mineTimer = setTimeout(() => {
           if (this.player) {
-            this.player.toggleMine();
+            this.player.toggleMine(1);
             this.updateHUD();
-            this.showBanner('MAYIN DEĞİŞTİRİLDİ', this.player.mineIndex === 0 ? 'Termonükleer Mayın' : 'EMP Şok Mayını');
+            const bannerNames = ['Termonükleer Kıyamet', 'EMP Şok & Felç', 'Kuantum Vorteks', 'Kümeli Şarapnel', 'Cehennem Plazma'];
+            this.showBanner('MAYIN DEĞİŞTİRİLDİ', bannerNames[this.player.mineIndex]);
           }
           mineTimer = null;
         }, 360);
@@ -2675,6 +3170,9 @@ class Game {
     this.pickups = [];
     this.shockwaves = [];
     this.quantumCores = [];
+    this.asteroids = [];
+    this.plasmaHazards = [];
+    this.singularities = [];
     this.spawnTimer = 0;
     this.isBonusLevel = false;
 
@@ -2690,11 +3188,23 @@ class Game {
       this.player.applyShipProfile(this.selectedShip);
       this.player.hp = Math.min(this.player.maxHp, this.player.hp + 40);
       this.player.shield = this.player.maxShield;
-      this.player.mineAmmo = Math.min(15, this.player.mineAmmo + 4);
+      this.player.mineAmmo = Math.min(25, this.player.mineAmmo + 6);
     }
 
     const tier = this.getWeaponTier();
     const theme = this.getSectorTheme(lvl);
+
+    // Orijinal Swarm Uzay Taşları (Asteroids) Dağıtımı (10-22 Taş)
+    const numAsteroids = Math.min(22, 10 + Math.floor(lvl * 0.4));
+    for (let i = 0; i < numAsteroids; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 480 + Math.random() * 1100;
+      const ax = this.player.x + Math.cos(angle) * dist;
+      const ay = this.player.y + Math.sin(angle) * dist;
+      const randSize = Math.random();
+      const size = randSize < 0.4 ? 'LARGE' : (randSize < 0.75 ? 'MEDIUM' : 'SMALL');
+      this.asteroids.push(new Asteroid(ax, ay, size));
+    }
 
     // Kuantum Çekirdeklerini (Görev Hedeflerini) Sektöre Dağıt (520m - 1320m keşif mesafesi)
     for (let c = 0; c < this.levelCoresGoal; c++) {
@@ -2767,6 +3277,9 @@ class Game {
     this.pickups = [];
     this.shockwaves = [];
     this.quantumCores = [];
+    this.asteroids = [];
+    this.plasmaHazards = [];
+    this.singularities = [];
     this.levelCoresGoal = 0;
     this.levelCoresCollected = 0;
     this.portal = null;
@@ -3081,16 +3594,51 @@ class Game {
     }
   }
 
-  // MAYIN ALAN HASARI VE KESİN PATLAMA
+  // MAYIN ALAN HASARI VE KESİN PATLAMA (5 GELİŞMİŞ TAKTİKSEL MAYIN)
   detonateMine(mine) {
     this.shockwaves.push(new Shockwave(mine.x, mine.y, mine.aoeRadius, mine.color));
 
-    if (mine.type === 0) {
-      this.audio.playExplosion(true);
-      this.createExplosion(mine.x, mine.y, '#ff4400', 40);
-    } else {
-      this.audio.playEMP();
-      this.createExplosion(mine.x, mine.y, '#00d2ff', 35);
+    switch (mine.type) {
+      case 0: // TERMONÜKLEER KIYAMET
+        this.shockwaves.push(new Shockwave(mine.x, mine.y, mine.aoeRadius * 0.55, '#ffffff'));
+        this.audio.playExplosion(true);
+        this.createExplosion(mine.x, mine.y, '#ff3300', 48);
+        this.createExplosion(mine.x, mine.y, '#ffea00', 28);
+        break;
+
+      case 1: // EMP ŞOK & FELÇ
+        this.audio.playEMP();
+        this.createExplosion(mine.x, mine.y, '#00d2ff', 38);
+        break;
+
+      case 2: // KUANTUM VORTEKS / KARADELİK
+        this.audio.playVortexImplosion();
+        this.createExplosion(mine.x, mine.y, '#9d00ff', 44);
+        this.singularities.push(new SingularityZone(mine.x, mine.y, mine.aoeRadius, 4.2, mine.damage));
+        break;
+
+      case 3: // KÜMELİ ŞARAPNEL TOPU
+        this.audio.playClusterBurst();
+        this.createExplosion(mine.x, mine.y, '#ffaa00', 36);
+        for (let s = 0; s < 18; s++) {
+          const ang = (s * Math.PI * 2) / 18 + (Math.random() - 0.5) * 0.22;
+          const proj = new Projectile(mine.x, mine.y, ang, 'SHRAPNEL', 1);
+          proj.speed = 1000 + Math.random() * 250;
+          proj.life = 0.75;
+          this.bullets.push(proj);
+        }
+        break;
+
+      case 4: // CEHENNEM PLAZMA ASİDİ
+        this.audio.playPlasmaFire();
+        this.createExplosion(mine.x, mine.y, '#00ff88', 36);
+        this.plasmaHazards.push(new PlasmaHazardZone(mine.x, mine.y, mine.aoeRadius, 5.5, 380));
+        break;
+
+      default:
+        this.audio.playExplosion(true);
+        this.createExplosion(mine.x, mine.y, '#ff3300', 40);
+        break;
     }
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -3113,7 +3661,7 @@ class Game {
         e.hp -= mine.damage;
 
         if (mine.type === 1) {
-          e.speed *= 0.45;
+          e.speed *= 0.35;
         }
 
         if (e.hp <= 0 && !e.dead) {
@@ -3145,6 +3693,16 @@ class Game {
           this.enemies.splice(i, 1);
           this.checkLevelObjectives();
         }
+      }
+    }
+
+    // Alandaki Uzay Taşlarına (Asteroids) Hasar Ver
+    for (let i = this.asteroids.length - 1; i >= 0; i--) {
+      const ast = this.asteroids[i];
+      if (ast.dead) continue;
+      const d = Math.hypot(ast.x - mine.x, ast.y - mine.y);
+      if (d <= mine.aoeRadius + ast.radius) {
+        ast.takeDamage(mine.damage, this, ast.x, ast.y);
       }
     }
   }
@@ -3320,6 +3878,12 @@ class Game {
             }
           }
         }
+        for (let j = this.asteroids.length - 1; j >= 0; j--) {
+          const ast = this.asteroids[j];
+          if (Math.hypot(b.x - ast.x, b.y - ast.y) < b.aoeRadius) {
+            ast.takeDamage(b.damage, this, ast.x, ast.y);
+          }
+        }
         this.bullets.splice(i, 1);
         continue;
       }
@@ -3405,6 +3969,22 @@ class Game {
 
           b.pierce--;
           if (b.pierce <= 0) break;
+        }
+      }
+
+      // Merminin Taşlara Çarpması
+      if (!hit && b.life > 0) {
+        for (let a = this.asteroids.length - 1; a >= 0; a--) {
+          const ast = this.asteroids[a];
+          if (ast.dead) continue;
+          if (Math.hypot(b.x - ast.x, b.y - ast.y) < ast.radius + b.radius) {
+            hit = true;
+            ast.takeDamage(b.damage, this, b.x, b.y);
+            this.audio.playAsteroidHit();
+            this.createExplosion(b.x, b.y, '#94a3b8', 4);
+            b.pierce--;
+            if (b.pierce <= 0) break;
+          }
         }
       }
 
@@ -3526,6 +4106,53 @@ class Game {
       }
     }
 
+    // Persisting Plazma Asit Yangın Alanları (Mayın 4)
+    for (let i = this.plasmaHazards.length - 1; i >= 0; i--) {
+      const ph = this.plasmaHazards[i];
+      ph.update(dt, this.enemies, this.asteroids, this.particles);
+      if (ph.duration <= 0) this.plasmaHazards.splice(i, 1);
+    }
+
+    // Persisting Kuantum Tekillik Vorteks Alanları (Mayın 2)
+    for (let i = this.singularities.length - 1; i >= 0; i--) {
+      const sg = this.singularities[i];
+      sg.update(dt, this.enemies, this.asteroids, this.particles);
+      if (sg.duration <= 0) this.singularities.splice(i, 1);
+    }
+
+    // Uzay Taşları (Asteroids) Güncellemesi ve Oyuncu Çarpışması
+    for (let i = this.asteroids.length - 1; i >= 0; i--) {
+      const ast = this.asteroids[i];
+      ast.update(dt);
+      if (ast.dead) {
+        this.asteroids.splice(i, 1);
+        continue;
+      }
+
+      // Orijinal Swarm Çarpışma Fiziği: Taşa çarpınca kalkan/gövde hasar alır, hak azalır, fiziksel geri seker!
+      if (this.player && this.player.invulnerableTimer <= 0) {
+        const d = Math.hypot(this.player.x - ast.x, this.player.y - ast.y);
+        if (d < this.player.radius + ast.radius) {
+          const pushAngle = Math.atan2(this.player.y - ast.y, this.player.x - ast.x);
+          const pushSpd = ast.pushForce || 380;
+          this.player.vx = Math.cos(pushAngle) * pushSpd;
+          this.player.vy = Math.sin(pushAngle) * pushSpd;
+          ast.vx -= Math.cos(pushAngle) * (pushSpd * 0.22);
+          ast.vy -= Math.sin(pushAngle) * (pushSpd * 0.22);
+
+          this.audio.playAsteroidHit();
+          this.createExplosion((this.player.x + ast.x) / 2, (this.player.y + ast.y) / 2, '#94a3b8', 14);
+          this.screenShake = 14;
+
+          const died = this.player.takeDamage(ast.damageToPlayer, this.audio);
+          if (died) {
+            this.handlePlayerDeath();
+            return;
+          }
+        }
+      }
+    }
+
     // Partiküller
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
@@ -3534,7 +4161,6 @@ class Game {
     }
 
     this.updateHUD();
-    this.drawRadar();
   }
 
   createExplosion(x, y, color, count = 16) {
@@ -3667,8 +4293,23 @@ class Game {
     if (this.dom.hpFill) this.dom.hpFill.style.width = `${hpPct}%`;
     if (this.dom.hpText) this.dom.hpText.textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
 
-    const mineNames = ['TERMONÜKLEER MAYIN', 'EMP ŞOK MAYINI'];
-    if (this.dom.mineName) this.dom.mineName.textContent = mineNames[this.player.mineIndex];
+    const mineNames = [
+      'TERMONÜKLEER KIYAMET',
+      'EMP ŞOK & FELÇ',
+      'KUANTUM VORTEKS',
+      'KÜMELİ ŞARAPNEL',
+      'CEHENNEM PLAZMA'
+    ];
+    const mineIcons = ['☢️', '⚡', '🌌', '💥', '🔥'];
+    const mineColors = ['#ff3300', '#00d2ff', '#9d00ff', '#ffaa00', '#00ff88'];
+    const mIdx = this.player.mineIndex || 0;
+    if (this.dom.mineName) {
+      this.dom.mineName.textContent = mineNames[mIdx];
+      this.dom.mineName.style.color = mineColors[mIdx];
+    }
+    if (this.dom.mineIcon) {
+      this.dom.mineIcon.textContent = mineIcons[mIdx];
+    }
     if (this.dom.mineAmmo) this.dom.mineAmmo.textContent = `x${this.player.mineAmmo}`;
 
     for (let i = 1; i <= 6; i++) {
@@ -3735,6 +4376,18 @@ class Game {
         else if (e.type === 'SNIPER') col = '#ff0033';
         ctx.fillStyle = col;
         ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
+      }
+    }
+
+    // Uzay Taşları / Asteroidler (Radarda Gri/Taş Kareleri)
+    ctx.fillStyle = '#94a3b8';
+    for (const ast of this.asteroids) {
+      if (ast.dead) continue;
+      const rx = (ast.x - this.player.x) * scale + w / 2;
+      const ry = (ast.y - this.player.y) * scale + h / 2;
+      if (rx >= 0 && rx <= w && ry >= 0 && ry <= h) {
+        const dotSize = ast.size === 'LARGE' ? 3.5 : (ast.size === 'MEDIUM' ? 2.5 : 1.5);
+        ctx.fillRect(rx - dotSize / 2, ry - dotSize / 2, dotSize, dotSize);
       }
     }
 
@@ -4015,7 +4668,7 @@ class Game {
     // 2. Parallaks Nebula Gaz Bulutları
     this.drawNebulaClouds(theme);
 
-    // 3. Yıldız Alanları (Temanın yıldız renginde)
+    // 3. Yıldız Alanları (Temanın yıldız renginde - Ultra Akıcı Tek Geçişli Batch Çizim)
     const drawInfiniteStars = (speed, count, size, alpha, color) => {
       this.ctx.save();
       const tileSize = 600;
@@ -4027,6 +4680,7 @@ class Game {
 
       this.ctx.fillStyle = color;
       this.ctx.globalAlpha = alpha;
+      this.ctx.beginPath();
       for (let c = -1; c < cols; c++) {
         for (let r = -1; r < rows; r++) {
           const tileX = c * tileSize + offsetX;
@@ -4035,12 +4689,11 @@ class Game {
           for (let i = 0; i < count; i++) {
             const sx = tileX + ((i * 127 + 43) % tileSize);
             const sy = tileY + ((i * 283 + 97) % tileSize);
-            this.ctx.beginPath();
-            this.ctx.arc(sx, sy, size, 0, Math.PI * 2);
-            this.ctx.fill();
+            this.ctx.rect(sx - size, sy - size, size * 2, size * 2);
           }
         }
       }
+      this.ctx.fill();
       this.ctx.restore();
     };
 
@@ -4051,7 +4704,7 @@ class Game {
     this.ctx.save();
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
-    // 4. Dinamik Renkli Koordinat Izgarası
+    // 4. Dinamik Renkli Koordinat Izgarası (Toplu Tek Çizim)
     const gridStep = 200;
     const startX = Math.floor(this.camera.x / gridStep) * gridStep;
     const endX = startX + this.viewWidth + gridStep * 2;
@@ -4060,29 +4713,36 @@ class Game {
 
     this.ctx.strokeStyle = theme.gridColor;
     this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
     for (let x = startX; x <= endX; x += gridStep) {
-      this.ctx.beginPath();
       this.ctx.moveTo(x, startY);
       this.ctx.lineTo(x, endY);
-      this.ctx.stroke();
     }
     for (let y = startY; y <= endY; y += gridStep) {
-      this.ctx.beginPath();
       this.ctx.moveTo(startX, y);
       this.ctx.lineTo(endX, y);
-      this.ctx.stroke();
     }
+    this.ctx.stroke();
 
     // Taşıyıcı Savaş Gemisi / Warp Portalı
     if (this.portal) {
       this.portal.draw(this.ctx);
     }
 
+    // Persisting Plazma Asit Yangın Alanları (Mayın 4)
+    for (const ph of this.plasmaHazards) ph.draw(this.ctx);
+
+    // Persisting Kuantum Tekillik Vorteks Alanları (Mayın 2)
+    for (const sg of this.singularities) sg.draw(this.ctx);
+
     // Şok Dalgaları
     for (const sw of this.shockwaves) sw.draw(this.ctx);
 
     // Mayınlar
     for (const m of this.mines) m.draw(this.ctx);
+
+    // Orijinal Swarm Uzay Taşları (Asteroids)
+    for (const ast of this.asteroids) ast.draw(this.ctx);
 
     // Kuantum Çekirdekleri (Görev Hedefleri)
     for (const c of this.quantumCores) c.draw(this.ctx);
@@ -4109,6 +4769,9 @@ class Game {
 
     // 6. Hiperuzay Sıçrama Çizgileri ve Parlama Efekti
     this.drawWarpEffect(this.ctx);
+
+    // Seviye Radarı (Her karede senkronize ve akıcı çizilir)
+    this.drawRadar();
 
     // Mobil Sanal Joystick (Sol Başparmak)
     if (this.joystick && this.joystick.active) {
