@@ -2079,17 +2079,13 @@ class Player {
   }
 
   // KENDİNDEN SONRAKİ MEVCUT EN İYİ SİLAHI BULMA HİYERARŞİSİ
-  // (Önce seçili silahtan bir alt kademeye doğru mevcut en güçlü silaha bakar; yoksa üst kademelere, o da yoksa 0 Plazma'ya geçer)
+  // (Seçili silahın mermisi bittiğinde kendinden sonraki bir alt kademedeki silaha geçer: 6 -> 5 -> 4 -> 3 -> 2 -> 1 -> 0)
   getNextBestAvailableWeapon() {
-    // 1. Seçili silahtan geriye/aşağıya doğru mevcut en güçlü silaha bak (kendinden sonraki)
+    // 1. Seçili silahtan geriye/aşağıya doğru mevcut mühimmatı olan en güçlü silaha bak (kendinden sonraki alt kademe)
     for (let i = this.weaponIndex - 1; i >= 1; i--) {
       if (this.ammo[i] > 0) return i;
     }
-    // 2. Alt kademelerde cephane yoksa, envanterdeki mevcut en yüksek güçlü silaha bak
-    for (let i = 6; i > this.weaponIndex; i--) {
-      if (this.ammo[i] > 0) return i;
-    }
-    // 3. Hiçbir özel silahın mermisi kalmadıysa sınırsız standart plazmaya (1. silah) geç
+    // 2. Alt kademelerde özel mühimmat kalmadıysa sınırsız standart plazmaya (1. silah) geç
     return 0;
   }
 
@@ -2271,6 +2267,11 @@ class Player {
   update(dt, targetAimAngle, isThrusting, particles) {
     if (this.invulnerableTimer > 0) this.invulnerableTimer -= dt;
     if (this.mineCooldown > 0) this.mineCooldown -= dt;
+
+    // Seçili özel silahın mermisi bittiyse otomatik olarak kendinden sonraki en iyi silaha geç
+    if (this.weaponIndex !== 0 && this.ammo[this.weaponIndex] <= 0) {
+      this.switchToNextBestWeapon();
+    }
 
     if (this.shieldRechargeDelay > 0) {
       this.shieldRechargeDelay -= dt;
@@ -2527,6 +2528,7 @@ class Player {
 // --- 9. ANA OYUN YÖNETİCİSİ (GAME ENGINE) ---
 class Game {
   constructor() {
+    console.log('%c🚀 NEBULA SPACE v2.2.4 READY', 'color: #00f0ff; font-weight: bold; font-size: 14px;');
     this.canvas = document.getElementById('gameCanvas');
     this.ctx = this.canvas.getContext('2d');
     this.radarCanvas = document.getElementById('radarCanvas');
@@ -2879,14 +2881,20 @@ class Game {
       }
     });
 
+    let lastWheelTime = 0;
     window.addEventListener('wheel', (e) => {
       if (!this.player || this.isPaused || this.isLevelPaused) return;
+      const now = performance.now();
+      if (now - lastWheelTime < 200) return;
+      if (Math.abs(e.deltaY) < 20) return;
+      lastWheelTime = now;
       if (e.deltaY > 0) {
         this.player.setWeaponIndex((this.player.weaponIndex + 1) % 7);
       } else {
         this.player.setWeaponIndex((this.player.weaponIndex + 6) % 7);
       }
       this.updateWeaponSlots();
+      this.updateHUD();
     }, { passive: true });
 
     if (this.dom.minePanel) {
@@ -3795,7 +3803,11 @@ class Game {
       );
     }
 
+    const prevWep = this.player.weaponIndex;
     this.player.update(dt, targetAimAngle, this.isThrusting, this.particles);
+    if (prevWep !== this.player.weaponIndex) {
+      this.onWeaponChanged(prevWep);
+    }
 
     this.camera.x = Math.round(this.player.x - this.viewWidth / 2);
     this.camera.y = Math.round(this.player.y - this.viewHeight / 2);
@@ -4094,22 +4106,16 @@ class Game {
           this.player.ammo[pk.typeIndex] += ammoBoosts[pk.typeIndex] || 25;
 
           // KURAL: Oyuncunun seçtiği silah YENİ SİLAH ALINCA KESİNLİKLE DEĞİŞMEZ!
-          // Toplanan cephane doğrudan envantere aktarılır.
-          // Yalnızca mevcut seçili özel silahın mermisi 0 ise yeni silaha geçer.
-          if (this.player.weaponIndex !== 0 && this.player.ammo[this.player.weaponIndex] <= 0) {
-            this.player.setWeaponIndex(pk.typeIndex);
-            this.showBanner(`${pk.name} KUŞANILDI!`, 'Tükenen mühimmat yerine yeni silah devreye girdi.');
-          } else {
-            const tier = this.getWeaponTier();
-            const names = [
-              ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'],
-              ['GATLING', 'DÖRTLÜ LAZER', 'İKİZ FÜZE', 'PENTAGON', 'HİPER RAY', 'İYON YILDIRIM', 'TEKİLLİK'],
-              ['VULCAN', 'FOTON LAZER', 'KUANTUM FÜZE', 'NOVA SAÇMA', 'ANTİ-MADDE', 'ŞİMŞEK AĞI', 'KUANTUM ÇÖKÜŞ'],
-              ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'NEBULA IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK']
-            ][tier - 1] || ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'];
-            const activeName = names[this.player.weaponIndex] || 'SEÇİLİ SİLAH';
-            this.showBanner(`+${ammoBoosts[pk.typeIndex]} ${pk.name} CEPHANESİ!`, `Seçili Silah Korundu: ${activeName}`);
-          }
+          // Toplanan cephane doğrudan envantere kaydedilir, aktif silah asla zorla değiştirilmez.
+          const tier = this.getWeaponTier();
+          const names = [
+            ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'],
+            ['GATLING', 'DÖRTLÜ LAZER', 'İKİZ FÜZE', 'PENTAGON', 'HİPER RAY', 'İYON YILDIRIM', 'TEKİLLİK'],
+            ['VULCAN', 'FOTON LAZER', 'KUANTUM FÜZE', 'NOVA SAÇMA', 'ANTİ-MADDE', 'ŞİMŞEK AĞI', 'KUANTUM ÇÖKÜŞ'],
+            ['OMEGA FIRTINA', 'TAKYON AĞI', 'KIYAMET SÜRÜSÜ', 'SÜPERNOVA', 'NEBULA IŞINI', 'FIRTINA ZİNCİRİ', 'KARA DELİK']
+          ][tier - 1] || ['PLAZMA', 'İKİLİ LAZER', 'FÜZE', 'SAÇMA', 'RAY SİLAHI', 'TESLA ARK', 'VORTEKS'];
+          const activeName = names[this.player.weaponIndex] || 'SEÇİLİ SİLAH';
+          this.showBanner(`+${ammoBoosts[pk.typeIndex]} ${pk.name} CEPHANESİ!`, `Seçili Silah Korundu: ${activeName}`);
 
           this.updateWeaponSlots();
           this.updateHUD();
