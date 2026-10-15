@@ -20,6 +20,10 @@
   -webkit-user-select: none;
 }
 
+button:focus, a:focus, .neon-btn:focus, .icon-btn:focus, .start-tab-btn:focus, .mobile-btn:focus {
+  outline: none !important;
+}
+
 html, body {
   width: 100%;
   height: 100%;

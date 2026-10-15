@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>NEBULA SPACE - 40 Level Space Campaign</title>
-  <link rel="stylesheet" href="style.css?v=2.2.1">
+  <link rel="stylesheet" href="style.css?v=2.2.2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -59,13 +59,13 @@
         </div>
 
         <div class="stats-group right">
-          <button id="pause-btn" class="icon-btn" title="Oyunu Duraklat (ESC)">
+          <button id="pause-btn" class="icon-btn" title="Oyunu Duraklat (ESC)" tabindex="-1">
             <span>⏸️</span>
           </button>
-          <button id="music-btn" class="icon-btn" title="Müziği Aç/Kapat">
+          <button id="music-btn" class="icon-btn" title="Müziği Aç/Kapat" tabindex="-1">
             <span id="music-icon">🎵</span>
           </button>
-          <button id="sound-btn" class="icon-btn" title="Ses Efektlerini Aç/Kapat">
+          <button id="sound-btn" class="icon-btn" title="Ses Efektlerini Aç/Kapat" tabindex="-1">
             <span id="sound-icon">🔊</span>
           </button>
         </div>
@@ -159,10 +159,10 @@
 
       <!-- Mobil Kontroller (Sağ Başparmak Grubu) -->
       <div class="mobile-controls-wrap">
-        <button id="mobile-weapon-btn" class="mobile-btn weapon-btn" title="Silah Değiştir (1-7)">SİLAH</button>
-        <button id="mobile-mine-btn" class="mobile-btn mine-btn" title="Alan Mayını Bırak">MAYIN</button>
-        <button id="mobile-thrust-btn" class="mobile-btn thrust-btn" title="İtici (Motor)">İTİCİ</button>
-        <button id="mobile-fire-btn" class="mobile-btn fire-btn" title="Seri Ateş">ATEŞ</button>
+        <button id="mobile-weapon-btn" class="mobile-btn weapon-btn" title="Silah Değiştir (1-7)" tabindex="-1">SİLAH</button>
+        <button id="mobile-mine-btn" class="mobile-btn mine-btn" title="Alan Mayını Bırak" tabindex="-1">MAYIN</button>
+        <button id="mobile-thrust-btn" class="mobile-btn thrust-btn" title="İtici (Motor)" tabindex="-1">İTİCİ</button>
+        <button id="mobile-fire-btn" class="mobile-btn fire-btn" title="Seri Ateş" tabindex="-1">ATEŞ</button>
       </div>
     </div>
 
@@ -177,8 +177,8 @@
 
         <!-- Mobil Cihazlar İçin Hızlı Sekmeler -->
         <div class="start-mobile-tabs">
-          <button class="start-tab-btn active" data-tab="hangar">🚀 GEMİ SEÇİMİ & BAŞLA</button>
-          <button class="start-tab-btn" data-tab="intel">📋 KONTROLLER & REHBER</button>
+          <button class="start-tab-btn active" data-tab="hangar" tabindex="-1">🚀 GEMİ SEÇİMİ & BAŞLA</button>
+          <button class="start-tab-btn" data-tab="intel" tabindex="-1">📋 KONTROLLER & REHBER</button>
         </div>
 
         <div class="start-body-grid">
@@ -226,7 +226,7 @@
                 <span><strong>Mobil Cihazlar:</strong> Sol ekran sanal joystick ile yönlendir, sağdaki <strong>ATEŞ</strong>, <strong>İTİCİ</strong>, <strong>MAYIN</strong>, <strong>SİLAH</strong> butonlarıyla savaş!</span>
               </div>
             </div>
-            <button class="neon-btn secondary switch-to-hangar-btn mobile-only-btn" style="margin-top: 10px; padding: 10px 16px; font-size: 12px;">GEMİ SEÇİMİNE GEÇ ❯</button>
+            <button class="neon-btn secondary switch-to-hangar-btn mobile-only-btn" tabindex="-1" style="margin-top: 10px; padding: 10px 16px; font-size: 12px;">GEMİ SEÇİMİNE GEÇ ❯</button>
           </div>
 
           <!-- Sağ Kolon: Hangar Gemi Seçimi & Başlat Butonu -->
@@ -305,8 +305,8 @@
         </div>
 
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <button id="resume-btn" class="neon-btn">DEVAM ET (ESC)</button>
-          <button id="pause-restart-btn" class="neon-btn secondary">SEVİYEYİ YENİDEN BAŞLAT</button>
+          <button id="resume-btn" class="neon-btn" tabindex="-1">DEVAM ET (ESC)</button>
+          <button id="pause-restart-btn" class="neon-btn secondary" tabindex="-1">SEVİYEYİ YENİDEN BAŞLAT</button>
         </div>
       </div>
     </div>
@@ -373,7 +373,7 @@
             <strong id="final-kills">0</strong>
           </div>
         </div>
-        <button id="restart-btn" class="neon-btn">SEVİYEYİ TEKRAR DENE</button>
+        <button id="restart-btn" class="neon-btn" tabindex="-1">SEVİYEYİ TEKRAR DENE</button>
       </div>
     </div>
 
@@ -384,6 +384,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.2.1"></script>
+  <script src="game.js?v=2.2.2"></script>
 </body>
 </html>

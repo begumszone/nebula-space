@@ -2017,6 +2017,7 @@ class Player {
 
     this.roll = 0;
     this.strobeTimer = 0;
+    this.thrustGrace = 0;
 
     this.applyShipProfile(shipType);
   }
@@ -2262,6 +2263,14 @@ class Player {
       this.shield = Math.min(this.maxShield, this.shield + this.shieldRechargeRate * dt);
     }
 
+    // İtiş motoru pürüzsüzleştirme (Klavye tuş tekrarlarında ve mikro boşluklarda alevin/geminin titremesini önler)
+    if (isThrusting) {
+      this.thrustGrace = 0.14;
+    } else if (this.thrustGrace > 0) {
+      this.thrustGrace -= dt;
+    }
+    const hasThrust = isThrusting || (this.thrustGrace > 0);
+
     let diff = targetAimAngle - this.angle;
     while (diff < -Math.PI) diff += Math.PI * 2;
     while (diff > Math.PI) diff -= Math.PI * 2;
@@ -2270,7 +2279,7 @@ class Player {
     const targetRoll = Math.max(-0.6, Math.min(0.6, diff * 12 * 0.12));
     this.roll += (targetRoll - this.roll) * Math.min(1, 10 * dt);
 
-    if (isThrusting) {
+    if (hasThrust) {
       this.vx += Math.cos(this.angle) * this.thrustPower * dt;
       this.vy += Math.sin(this.angle) * this.thrustPower * dt;
 
@@ -2299,8 +2308,6 @@ class Player {
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
-
-    this.strobeTimer += dt * 5;
   }
 
   // 4 FARKLI GEMİ MODELİNİN ÖZEL ÇİZİMLERİ
@@ -2309,8 +2316,15 @@ class Player {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 60) % 2 === 0) {
-      ctx.globalAlpha = 0.4;
+    // Dokunulmazlık durumu: Gemiyi titreterek yanıp söndürmek yerine sabit koruyucu neon aura
+    if (this.invulnerableTimer > 0) {
+      ctx.save();
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 32, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
 
     const rollScaleY = Math.cos(this.roll);
@@ -2327,6 +2341,8 @@ class Player {
       ctx.stroke();
       ctx.restore();
     }
+
+    const hasThrust = isThrusting || (this.thrustGrace > 0);
 
     if (this.shipType === 'TITAN') {
       // --- GEMİ 2: TITAN (AĞIR ZIRHLI KRUVAZÖR) ---
@@ -2356,11 +2372,11 @@ class Player {
       ctx.fillRect(8, -4, 10, 8);
 
       // 4'lü Ağır Egzoz Alevi
-      if (isThrusting) {
+      if (hasThrust) {
         ctx.fillStyle = '#ff5500';
         [-16, -7, 7, 16].forEach((yPos) => {
           ctx.beginPath();
-          ctx.arc(-26, yPos, 4, 0, Math.PI * 2);
+          ctx.arc(-26, yPos, 4.5, 0, Math.PI * 2);
           ctx.fill();
         });
       }
@@ -2396,9 +2412,9 @@ class Player {
       ctx.stroke();
 
       // Mor Alev
-      if (isThrusting) {
+      if (hasThrust) {
         ctx.fillStyle = '#d070ff';
-        const flame = Math.random() * 14 + 18;
+        const flame = 22 + Math.sin(Date.now() * 0.02) * 4;
         ctx.beginPath();
         ctx.moveTo(-20, -5); ctx.lineTo(-20 - flame, 0); ctx.lineTo(-20, 5);
         ctx.fill();
@@ -2425,11 +2441,12 @@ class Player {
       ctx.fill();
 
       // İkiz Yeşil İtici
-      if (isThrusting) {
+      if (hasThrust) {
         ctx.fillStyle = '#00ff88';
+        const flame = 16 + Math.sin(Date.now() * 0.02) * 3;
         [-12, 12].forEach((yPos) => {
           ctx.beginPath();
-          ctx.moveTo(-20, yPos - 3); ctx.lineTo(-36, yPos); ctx.lineTo(-20, yPos + 3);
+          ctx.moveTo(-20, yPos - 3); ctx.lineTo(-20 - flame, yPos); ctx.lineTo(-20, yPos + 3);
           ctx.fill();
         });
       }
@@ -2478,8 +2495,8 @@ class Player {
       ctx.fillRect(-19, -7, 4, 3.5);
       ctx.fillRect(-19, 3.5, 4, 3.5);
 
-      if (isThrusting) {
-        const flameLen = Math.random() * 16 + 18;
+      if (hasThrust) {
+        const flameLen = 22 + Math.sin(Date.now() * 0.02) * 4;
         ctx.fillStyle = '#ffe600';
         ctx.beginPath();
         ctx.moveTo(-19, -7); ctx.lineTo(-19 - flameLen, -5.25); ctx.lineTo(-19, -3.5);
@@ -2767,20 +2784,30 @@ class Game {
       if (e.button === 0) this.isFiring = false;
     });
 
+    // Butonların odaklanıp Space tuşunu click olarak algılamasını önle
+    window.addEventListener('focusin', (e) => {
+      if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) {
+        e.target.blur();
+      }
+    });
+
     // KLAVYE KONTROLLERİ (1-7 SİLAHLAR)
     window.addEventListener('keydown', (e) => {
       // Space tuşunun sayfayı kaydırmasını veya odaklı butonları (Space = click) tetiklemesini engelle
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
         e.preventDefault();
+        if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+          document.activeElement.blur();
+        }
       }
 
       if (!this.isRunning) {
-        if (this.dom.startOverlay && !this.dom.startOverlay.classList.contains('hidden') && (e.code === 'Space' || e.code === 'Enter')) {
+        if (this.dom.startOverlay && !this.dom.startOverlay.classList.contains('hidden') && (e.code === 'Space' || e.code === 'Enter' || e.key === ' ')) {
           this.audio.init();
           this.start();
           return;
         }
-        if (this.dom.gameOverOverlay && !this.dom.gameOverOverlay.classList.contains('hidden') && (e.code === 'Space' || e.code === 'Enter')) {
+        if (this.dom.gameOverOverlay && !this.dom.gameOverOverlay.classList.contains('hidden') && (e.code === 'Space' || e.code === 'Enter' || e.key === ' ')) {
           this.audio.init();
           this.start();
           return;
@@ -2798,7 +2825,7 @@ class Game {
         return;
       }
 
-      if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32 || e.code === 'KeyW' || e.code === 'ArrowUp') {
         this.isThrusting = true;
       }
 
@@ -2829,7 +2856,10 @@ class Game {
     });
 
     window.addEventListener('keyup', (e) => {
-      if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
+        e.preventDefault();
+      }
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32 || e.code === 'KeyW' || e.code === 'ArrowUp') {
         this.isThrusting = false;
       }
     });
@@ -3713,8 +3743,8 @@ class Game {
         this.player.vy = 0;
       }
 
-      this.camera.x = this.player.x - this.viewWidth / 2;
-      this.camera.y = this.player.y - this.viewHeight / 2;
+      this.camera.x = Math.round(this.player.x - this.viewWidth / 2);
+      this.camera.y = Math.round(this.player.y - this.viewHeight / 2);
 
       // 1.4 saniye sonra level complete ekranını aç
       if (this.warpTimer > 1.4) {
@@ -3724,9 +3754,6 @@ class Game {
       }
       return;
     }
-
-    this.camera.x = this.player.x - this.viewWidth / 2;
-    this.camera.y = this.player.y - this.viewHeight / 2;
 
     let targetAimAngle;
     if (this.hasMobileAim && this.joystick && this.joystick.active) {
@@ -3739,6 +3766,9 @@ class Game {
     }
 
     this.player.update(dt, targetAimAngle, this.isThrusting, this.particles);
+
+    this.camera.x = Math.round(this.player.x - this.viewWidth / 2);
+    this.camera.y = Math.round(this.player.y - this.viewHeight / 2);
 
     // Taşıyıcı Savaş Gemisi & Warp Portalı Kontrolü
     if (this.portal) {
